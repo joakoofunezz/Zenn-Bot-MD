@@ -292,7 +292,7 @@ export async function sendCase(conn, m, store) {
                     if (!m.isGroup) return m.sms('group')
                     if (!m.isAdmin) return m.sms('admin')
                     if (chat.commands.rpg) return m.reply(smTrue)
-                    try { chat.commands.rpg = true; m.react(done) } catch { m.react(error) }
+                    try { chat.commands.rpg = true; m.reply('El uso de coins ha sido reactivado'); m.react(done) } catch { m.react(error) }
                 }
                 else if (m.args[0] == 'servicio') {
                     if (!m.isGroup) return m.sms('group')
@@ -346,7 +346,7 @@ export async function sendCase(conn, m, store) {
                     if (!m.isGroup) return m.sms('group')
                     if (!m.isAdmin) return m.sms('admin')
                     if (!chat.commands.servicio) return m.reply(smFalse)
-                    try { chat.commands.servicio = false; m.reply('El uso de coins ha sido reactivado'); m.react(done) } catch { m.react(error) }
+                    try { chat.commands.servicio = false; m.react(done) } catch { m.react(error) }
                 }
                 else if (m.args[0] == 'grupos') {
                     if (!m.isGroup) return m.sms('group')
@@ -580,17 +580,17 @@ Enviando archivo${readMore}`.trim();
                         m.reply(cptn)
                         for (let o = 0; o < url.length; o++) { await conn.sendMessage(m.chat, { [(/mp4/.test(url[o])) ? "video" : "image"]: { url: url[o] } }, { quoted: m }) }
                         conn.sendMessage(m.chat, { audio: { url: musicatiktok }, mimetype: 'audio/mpeg' }); m.react(done)
+                    } else {
+                        var url = p.play
+                        var cptn = `*Titulo:* ${p.title}\n`
+                        cptn += `*Usuario:* ${p.author.nickname}\n`
+                        cptn += `*Reproducciones:* ${p.play_count}\n`
+                        cptn += `*Comentarios:* ${p.comment_count}\n`
+                        cptn += `*Descargas:* ${p.download_count}\n`
+                        cptn += `\nBy KenisawaDev`
+                        await conn.sendMessage(m.chat, { video: { url: url }, caption: cptn }, { quoted: m })
+                        conn.sendMessage(m.chat, { audio: { url: musicatiktok }, mimetype: 'audio/mpeg' }); m.react(done)
                     }
-
-                    var url = p.play
-                    var cptn = `*Titulo:* ${p.title}\n`
-                    cptn += `*Usuario:* ${p.author.nickname}\n`
-                    cptn += `*Reproducciones:* ${p.play_count}\n`
-                    cptn += `*Comentarios:* ${p.comment_count}\n`
-                    cptn += `*Descargas:* ${p.download_count}\n`
-                    cptn += `\nBy KenisawaDev`
-                    await conn.sendMessage(m.chat, { video: { url: url }, caption: cptn }, { quoted: m })
-                    conn.sendMessage(m.chat, { audio: { url: musicatiktok }, mimetype: 'audio/mpeg' }); m.react(done)
                 } catch (e) { console.log(e); m.react(error) }
             } break
 
