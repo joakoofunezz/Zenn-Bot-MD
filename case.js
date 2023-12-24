@@ -1015,7 +1015,7 @@ ${readMore}
 ▢ *Apodo en Whatsapp :*
 ● ${conn.user.name}
 ▢ *Creador :* Zeppt 
-▢ *Version del bot :* 1.0.5 beta
+▢ *Version del bot :* 2.0.0 beta
 ▢ *Velocidad de procesamiento : ${speed} MLS...*
 ▢ *Velocidad de conexion: ${now() - timestamp.toFixed(4)} S...*
 ▢ *RAM: ${format(totalmem() - freemem())} / ${format(totalmem())}*
