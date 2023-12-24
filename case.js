@@ -567,7 +567,7 @@ Enviando archivo${readMore}`.trim();
                 var ktt = await fetchJson(`https://www.tikwm.com/api/?url=${m.text}?hd=1`)
                 var p = ktt.data
                 try {
-                    var musicatiktok = p.music
+                    var musicatiktok = p.music ?  p.music : false
                     if (p.images) {
                         var url = p.images
                         var cptn = `*Titulo:* ${p.title}\n`
@@ -579,7 +579,8 @@ Enviando archivo${readMore}`.trim();
                         cptn += `\nEnviando Medios`
                         m.reply(cptn)
                         for (let o = 0; o < url.length; o++) { await conn.sendMessage(m.chat, { [(/mp4/.test(url[o])) ? "video" : "image"]: { url: url[o] } }, { quoted: m }) }
-                        conn.sendMessage(m.chat, { audio: { url: musicatiktok }, mimetype: 'audio/mpeg' }); m.react(done)
+                        if (musicatiktok) conn.sendMessage(m.chat, { audio: { url: musicatiktok }, mimetype: 'audio/mpeg' }); m.react(done)
+                        if (database('chats', m.chat).commands.rpg) { coin(true) }
                     } else {
                         var url = p.play
                         var cptn = `*Titulo:* ${p.title}\n`
@@ -589,7 +590,8 @@ Enviando archivo${readMore}`.trim();
                         cptn += `*Descargas:* ${p.download_count}\n`
                         cptn += `\nBy KenisawaDev`
                         await conn.sendMessage(m.chat, { video: { url: url }, caption: cptn }, { quoted: m })
-                        conn.sendMessage(m.chat, { audio: { url: musicatiktok }, mimetype: 'audio/mpeg' }); m.react(done)
+                        if (musicatiktok) conn.sendMessage(m.chat, { audio: { url: musicatiktok }, mimetype: 'audio/mpeg' }); m.react(done)
+                        if (database('chats', m.chat).commands.rpg) { coin(true) }
                     }
                 } catch (e) { console.log(e); m.react(error) }
             } break
