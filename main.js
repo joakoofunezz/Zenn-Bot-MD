@@ -97,6 +97,7 @@ async function StartBot() {
     m.mek = m
     m.prefix = global.prefix
     m = await smsg(conn, m, store)
+    if (!m.message) return;
 
     if (m.key) {
       m.groupMetadata = m.isGroup ? await conn.groupMetadata(m.chat) : ''
@@ -158,6 +159,10 @@ async function StartBot() {
         if (!('antiTraba' in chat)) chat.antiTraba = true
         if (!('antiLink' in chat)) chat.antiLink = false
       } else global.db.data.chats[m.chat] = {
+        commands: {
+          servicio: false,
+          rpg: false,
+        },
         isBanned: false,
         welcome: false,
         detect: true,

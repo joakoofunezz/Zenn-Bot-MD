@@ -65,7 +65,8 @@ ${readMore}
 ╔I *「 GRUPOS 」*
 ║╭—————————
 ║├ %prefix reenviar *reponder a un mensaje*
-║├ %prefix profilegrupo (imagen)
+║├ %prefix profilegrupo (en desarrollo)
+║├ %prefix estado
 ║├ %prefix promote *@user*
 ║├ %prefix demote *@user*
 ║├ %prefix grupo *(Cerrar| Abrir)*
@@ -115,6 +116,7 @@ ${readMore}
 ║╰┬—I *「 DESCARGAS 」*
 ║╭╯
 ║├ %prefix gitclone *<link>*
+║├ %prefix tiktok *<link>*
 ║├ %prefix mediafire (en desarrollo)
 ║├ %prefix gdrive (en desarrollo)
 ║├ %prefix ytmp3 *<link> (máximo 5)*
@@ -202,6 +204,18 @@ export async function sendCase(conn, m, store) {
 
     database('users', m.sender).exp += Math.floor(Math.random() * 5) + 1
 
+    /*function balance() {
+        let object = false
+        const usuario = database('users', sender ? sender : m.sender)
+        if (usuario.coin == 0 || usuario.coin < 1) { m.reply(`*¡Ups!* Parece que te has quedado sin coins para utilizar algunas funciones T_T. Puedes comprar más coins usando este comando:\n\n${prefix}comprar <cantidad>`); object = true } else if (usuario.coin == 4) m.reply(`*¡Atención!* Solo te quedan 3 coins. No olvides que puedes adquirir más coins utilizando el comando *${prefix}comprar <cantidad>* ¡Asegúrate de tener suficientes coins para seguir usando este Bot!`)
+        return object
+    }
+
+    function setcoin(coin = 1) {
+        const usuario = database('users', m.sender)
+        return usuario.coin = premium(User) ? usuario.coin - 0 : usuario.coin - (coin == true ? 1 : coin)
+    }*/
+
     const coin = (coin = 0) => {
         let coin0 = false
         let igual4 = false
@@ -237,10 +251,10 @@ export async function sendCase(conn, m, store) {
         }
     }
 
+    ////////////////////////GRUPOS
     switch (m.command) {
         case 'chat': { m.reply('ID: ' + m.chat) } break
 
-        ///// GRUPOS
         case 'encender': case 'true': case 'apagar': case 'false': {
             if (!m.args[0]) return m.reply(settings.split('%prefix ').join(global.prefix))
             const chat = global.db.data.chats[m.chat]
@@ -273,7 +287,26 @@ export async function sendCase(conn, m, store) {
                     if (!m.isAdmin) return m.sms('admin')
                     if (chat.antiTraba) return m.reply(smTrue)
                     try { chat.antiTraba = true; m.react(done) } catch { m.react(error) }
-                } else m.reply(settings.split('%prefix ').join(global.prefix))
+                }
+                else if (m.args[0] == 'rpg') {
+                    if (!m.isGroup) return m.sms('group')
+                    if (!m.isAdmin) return m.sms('admin')
+                    if (chat.commands.rpg) return m.reply(smTrue)
+                    try { chat.commands.rpg = true; m.react(done) } catch { m.react(error) }
+                }
+                else if (m.args[0] == 'servicio') {
+                    if (!m.isGroup) return m.sms('group')
+                    if (!m.isAdmin) return m.sms('admin')
+                    if (chat.commands.servicio) return m.reply(smTrue)
+                    try { chat.commands.servicio = true; m.react(done) } catch { m.react(error) }
+                }
+                else if (m.args[0] == 'grupos') {
+                    if (!m.isGroup) return m.sms('group')
+                    if (!m.isAdmin) return m.sms('admin')
+                    if (chat.commands.grupos) return m.reply(smTrue)
+                    try { chat.commands.grupos = true; m.react(done) } catch { m.react(error) }
+                }
+                else m.reply(settings.split('%prefix ').join(global.prefix))
             }
 
             else if (m.command == 'apagar' || m.command == 'false') {
@@ -302,7 +335,26 @@ export async function sendCase(conn, m, store) {
                     if (!m.isAdmin) return m.sms('admin')
                     if (!chat.antiTraba) return m.reply(smFalse)
                     try { chat.antiTraba = false; m.react(done) } catch { m.react(error) }
-                } else m.reply(settings.split('%prefix ').join(global.prefix))
+                }
+                else if (m.args[0] == 'rpg') {
+                    if (!m.isGroup) return m.sms('group')
+                    if (!m.isAdmin) return m.sms('admin')
+                    if (!chat.commands.rpg) return m.reply(smFalse)
+                    try { chat.commands.rpg = false; m.reply('El uso de coins ha sido desactivado'); m.react(done) } catch { m.react(error) }
+                }
+                else if (m.args[0] == 'servicio') {
+                    if (!m.isGroup) return m.sms('group')
+                    if (!m.isAdmin) return m.sms('admin')
+                    if (!chat.commands.servicio) return m.reply(smFalse)
+                    try { chat.commands.servicio = false; m.reply('El uso de coins ha sido reactivado'); m.react(done) } catch { m.react(error) }
+                }
+                else if (m.args[0] == 'grupos') {
+                    if (!m.isGroup) return m.sms('group')
+                    if (!m.isAdmin) return m.sms('admin')
+                    if (!chat.commands.grupos) return m.reply(smFalse)
+                    try { chat.commands.grupos = false; m.react(done) } catch { m.react(error) }
+                }
+                else m.reply(settings.split('%prefix ').join(global.prefix))
             }
         } break
 
@@ -339,31 +391,6 @@ export async function sendCase(conn, m, store) {
                 m.reply(`*GRUPO CERRADO*`)
                 await conn.groupSettingUpdate(m.chat, 'announcement')
             }
-        } break
-
-        case 'perfil': case 'profile': {
-            const sender = m.quoted ? m.quoted.sender : m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender
-            if (!(sender in global.db.data.users)) return m.reply(`El usuario no se encuentra en mi base de datos`)
-            let pp = await conn.profilePictureUrl(sender, 'image')
-            let { coin, exp, nivel, role, registered, name } = database('users', m.sender)
-            let Text = `
-┌───「 *PERFIL* 」
-▢ *Nombres:* 
-• ${registered ? name : m.name}
-• @${sender.replace(/@.+/, '')}
-▢ *Numero:* ${PhoneNumber('+' + sender.replace('@s.whatsapp.net', '')).getNumber('international')}
-▢ *Link:* wa.me/${sender.split`@`[0]}
-▢ *Premium* : ${m.isPrems ? 'Si' : 'No'}
-▢ *coins :* ${m.isPrems ? '∞' : coin}
-▢ *XP :* ${exp}
-▢ *Nivel :* ${nivel}
-▢ *Rol :* ${role}
-▢ *Registrado :* ${registered ? 'Si' : 'No'}
-└──────────────`.trim()
-
-            const { path } = await overlayImages([pp, m.isPrems ? './multimedia/iconos/premium.png' : registered ? './multimedia/iconos/registrado.png' : './multimedia/iconos/user.png'], { tamano: [100, 100], localizacion: ['abajoIzquierda', 30] })
-
-            conn.sendMessage(m.chat, { image: fs.readFileSync(path), caption: Text, contextInfo: { mentionedJid: [...Text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), externalAdReply: { title: registered ? name : m.name, body: 'Usuario de Zenn Bot MD', thumbnail: fs.readFileSync('./multimedia/imagenes/thumbnail.jpg') } } }, { quoted: m }); m.react(done)
         } break
 
         case 'hidetag': case 'notificar': case 'tag': {
@@ -424,487 +451,541 @@ export async function sendCase(conn, m, store) {
             conn.sendMessage(m.chat, { text: teks, mentions: m.participants.map(a => a.id) }, { quoted: m, ephemeralExpiration: 24 * 60 * 100, disappearingMessagesInChat: 24 * 60 * 100 })
         } break
 
-        ///DESCARGAS
-        case 'mediafire': case 'mf': {
-            if (!m.args[0]) return m.reply('Y el link?')
-            const res = await mediafireDl(m.args[0]);
-            const { name, size, date, mime, link } = res;
-            m.react(rwait)
-            const caption = `『 MEDIAFIRE / VaryonBot 』
+        case 'estado': {
+            const { isBanned, welcome, antiLink, antiTraba, commands } = database('chats', m.chat)
+            let text = (`• ${antiTraba ? '( ✓ )' : '( ✗ )'} : Anti-Traba
+• ${isBanned ? '( ✓ )' : '( ✗ )'} : Baneado
+• ${welcome ? '( ✓ )' : '( ✗ )'} : Bienvenida
+• ${antiLink ? '( ✓ )' : '( ✗ )'} : Anti-Link
+• ${commands.rpg ? '( ✓ )' : '( ✗ )'} : comandos rpg
+• ${commands.servicio ? '( ✓ )' : '( ✗ )'} : comandos de descargas`).trim()
+            conn.sendMessage(m.chat, { text: text, mentions: [m.sender] }, { ephemeralExpiration: 24 * 3600, quoted: { key: { participant: '0@s.whatsapp.net' }, message: { documentMessage: { title: `[ ESTADO BOT ]`, jpegThumbnail: fs.readFileSync('./multimedia/imagenes/thumbnail.jpg') } } } })
+        }
+    }
+
+    ////////////////////////DESCARGAS
+    if (!database('chats', m.chat).commands.servicio) {
+        switch (m.command) {
+            case 'mediafire': case 'mf': {
+                if (!m.args[0]) return m.reply('Y el link?')
+                const res = await mediafireDl(m.args[0]);
+                const { name, size, date, mime, link } = res;
+                m.react(rwait)
+                const caption = `『 MEDIAFIRE / VaryonBot 』
       
 *▢ Nombre:*  ${name}
 *▢ Tamaño:* ${size}
 *▢ Extension:* ${mime}
 
 Enviando archivo${readMore}`.trim();
-            await m.reply(caption);
-            await conn.sendMessage(m.chat, { document: { url: await conn.sendBuffer(link) }, mimetype: 'video/' + mime, fileName: name }, { quoted: m }); m.react(done)
-        } break
+                await m.reply(caption);
+                await conn.sendMessage(m.chat, { document: { url: await conn.sendBuffer(link) }, mimetype: 'video/' + mime, fileName: name }, { quoted: m }); m.react(done)
+            } break
 
-        case 'play': case 'yta': case 'playmp3': case 'audio': case 'ytv': case 'playmp4': case 'video': {
-            if (coin().igual[0]) m.reply(coin().igual[1])
-            if (coin().coin[0]) return m.reply(coin().coin[1])
+            case 'play': case 'yta': case 'playmp3': case 'audio': case 'ytv': case 'playmp4': case 'video': {
+                if (coin().igual[0]) m.reply(coin().igual[1])
+                if (coin().coin[0]) return m.reply(coin().coin[1])
 
-            if (!m.text) return m.reply(`*Ingresa el título de una canción*`)
-            const vid = (await yts(m.text)).all[0]
-            if (!vid) return m.reply(`Sin resultados`)
-            const { title, description, thumbnail, videoId, timestamp, views, ago, url } = vid
-            const play = `▢ ${emoji.title} *Titulo :* ${title}\n▢ ${emoji.publicado} *Publicado :* ${ago}\n▢ ${emoji.duracion} *Duración :* ${timestamp}\n▢ ${emoji.vistas} *Vistas :* ${views}\n@Cargando${readMore}\n▢ 🧾 *Descripcion :* ${description}`.trim()
-            const _Url = `https://www.youtube.com/watch?v=${videoId}`
+                if (!m.text) return m.reply(`*Ingresa el título de una canción*`)
+                const vid = (await yts(m.text)).all[0]
+                if (!vid) return m.reply(`Sin resultados`)
+                const { title, description, thumbnail, videoId, timestamp, views, ago, url } = vid
+                const play = `▢ ${emoji.title} *Titulo :* ${title}\n▢ ${emoji.publicado} *Publicado :* ${ago}\n▢ ${emoji.duracion} *Duración :* ${timestamp}\n▢ ${emoji.vistas} *Vistas :* ${views}\n@Cargando${readMore}\n▢ 🧾 *Descripcion :* ${description}`.trim()
+                const _Url = `https://www.youtube.com/watch?v=${videoId}`
 
-            async function sendMsge(text) {
-                await new Promise(async (resolve, reject) => { try { await conn.sendMessage(m.chat, { text: play.replace('@Cargando', text), contextInfo: { externalAdReply: { title: title, body: description, thumbnailUrl: thumbnail, mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m }); resolve() } catch (error) { console.error(error); await conn.sendMessage(m.chat, { text: play.replace('@Cargando', text), contextInfo: { externalAdReply: { title: title, body: description, thumbnailUrl: thumbnail, mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m }); reject(error) } });
-            }
-
-            if (m.command == 'playmp3' || m.command == 'yta' || m.command == 'audio') {
-                try {
-                    await sendMsge('Cargando audio'); m.react(rwait)
-                    const mp3 = await dlmp3(_Url)
-                    conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${title}.mp3` }, { quoted: m }); m.react(done); coin(true); fs.unlinkSync(mp3.path)
-                } catch (e) { m.react(error); return }
-            }
-
-            else if (m.command == 'play' || m.command == 'playmp4' || m.command == 'ytv' || m.command == 'video') {
-                try {
-                    await sendMsge('Cargando video'); m.react(rwait)
-                    const { title, thumb, Date, duration, channel, quality, contentLength, description, videoUrl } = await ytdl.mp4(_Url)
-                    let cap = `*『 DV-YouTube 』*\n\n▢ *Título:* ${title}\n▢ *Calidad:* ${quality}`.trim()
-                    await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); coin(true)
-                } catch { m.react(error); return }
-            }
-
-        } break
-
-        case 'ytmp4': case 'ytmp3': {
-            if (coin().igual[0]) m.reply(coin().igual[1])
-            if (coin().coin[0]) return m.reply(coin().coin[1])
-            if (!m.args[0]) return m.reply('*Ingrese el comando junto al link de YouTube*')
-            if (!ytIdRegex.test(m.args[0])) return m.reply(`Link incorrecto`)
-            if (m.command == 'ytmp3') {
-                const urls = YoutTube(m.text)
-                for (let i = 0; i < urls.length; i++) {
-                    try {
-                        const mp3 = await dlmp3(urls[i])
-                        conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: mp3.info.title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${mp3.info.title}.mp3` }, { quoted: m }); m.react(done); coin(true); fs.unlinkSync(mp3.path)
-                    } catch { m.react(error) }
+                async function sendMsge(text) {
+                    await new Promise(async (resolve, reject) => { try { await conn.sendMessage(m.chat, { text: play.replace('@Cargando', text), contextInfo: { externalAdReply: { title: title, body: description, thumbnailUrl: thumbnail, mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m }); resolve() } catch (error) { console.error(error); await conn.sendMessage(m.chat, { text: play.replace('@Cargando', text), contextInfo: { externalAdReply: { title: title, body: description, thumbnailUrl: thumbnail, mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m }); reject(error) } });
                 }
-            } else
-                if (m.command == 'ytmp4') {
+
+                if (m.command == 'playmp3' || m.command == 'yta' || m.command == 'audio') {
+                    try {
+                        await sendMsge('Cargando audio'); m.react(rwait)
+                        const mp3 = await dlmp3(_Url)
+                        conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${title}.mp3` }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) }; fs.unlinkSync(mp3.path)
+                    } catch (e) { m.react(error); return }
+                }
+
+                else if (m.command == 'play' || m.command == 'playmp4' || m.command == 'ytv' || m.command == 'video') {
+                    try {
+                        await sendMsge('Cargando video'); m.react(rwait)
+                        const { title, thumb, Date, duration, channel, quality, contentLength, description, videoUrl } = await ytdl.mp4(_Url)
+                        let cap = `*『 DV-YouTube 』*\n\n▢ *Título:* ${title}\n▢ *Calidad:* ${quality}`.trim()
+                        await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) }
+                    } catch { m.react(error); return }
+                }
+
+            } break
+
+            case 'ytmp4': case 'ytmp3': {
+                if (coin().igual[0]) m.reply(coin().igual[1])
+                if (coin().coin[0]) return m.reply(coin().coin[1])
+                if (!m.args[0]) return m.reply('*Ingrese el comando junto al link de YouTube*')
+                if (!ytIdRegex.test(m.args[0])) return m.reply(`Link incorrecto`)
+                if (m.command == 'ytmp3') {
                     const urls = YoutTube(m.text)
                     for (let i = 0; i < urls.length; i++) {
                         try {
-                            const { title, thumb, Date, duration, channel, quality, contentLength, description, videoUrl } = await ytdl.mp4(urls[i])
-                            let cap = `*『 DV-YouTube 』*\n\n▢ *Título:* ${title}\n▢ *Calidad:* ${quality}`.trim()
-                            await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); coin(true);
+                            const mp3 = await dlmp3(urls[i])
+                            conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: mp3.info.title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${mp3.info.title}.mp3` }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) }; fs.unlinkSync(mp3.path)
                         } catch { m.react(error) }
                     }
-                }
-
-        } break
-
-        case 'yts': case 'ytsearch': {
-            if (coin().igual[0]) m.reply(coin().igual[1])
-            if (coin().coin[0]) return m.reply(coin().coin[1])
-            if (!m.text) return m.reply('Que quieres que busque en YouTube?')
-            m.react(rwait)
-            const vid = (await yts(m.text)).all[0]
-            const { thumbnail } = vid
-            let results = await yts(m.text)
-            let teks = results.all.map(v => {
-                switch (v.type) {
-                    case 'video': return `▢ ${v.title}\n▢ *Link* : ${v.url}\n▢ *Duración* : ${v.timestamp}\n▢ *Subido :* ${v.ago}\n▢ *Vistas:* ${v.views}`.trim()
-
-                    case 'canal': return `▢ *${v.name}* (${v.url})\n▢ ${v.subCountLabel} (${v.subCount}) Suscribirse\n▢ ${v.videoCount} videos`.trim()
-                }
-            }).filter(v => v).join('\n\n________________________\n\n')
-            await conn.sendMessage(m.chat, { text: readMore + teks, contextInfo: { externalAdReply: { title: 'YouTube - Search', thumbnailUrl: thumbnail, mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m }); m.react(done); coin(true)
-        } break
-
-        case 'gitclone': case 'git': case 'clone': {
-            const regex = /(?:https|git)(?::\/\/|@)github\.com[\/:]([^\/:]+)\/(.+)/i
-            if (coin().igual[0]) m.reply(coin().igual[1])
-            if (coin().coin[0]) return m.reply(coin().coin[1])
-
-            if (!m.args[0]) m.reply('Y el link?')
-            if (!regex.test(m.args[0])) m.reply(`Link incorrecto`)
-            let [_, user, repo] = m.args[0].match(regex) || []
-            repo = repo.replace(/.git$/, '')
-            let url = `https://api.github.com/repos/${user}/${repo}/zipball`
-            let filename = (await fetch(url, { method: 'HEAD' })).headers.get('content-disposition').match(/attachment; filename=(.*)/)[1]
-            m.react(rwait)
-            try { conn.sendMessage(m.chat, { document: { url: url }, mimetype: 'document/zip', fileName: filename }, { quoted: m }); m.react(done); coin(true) } catch { m.react(error); return }
-        } break
-
-        //https://drive.google.com/file/d/1dmHlx1WTbH5yZoNa_ln325q5dxLn1QHU/view*
-        case 'gdrive': {
-            if (coin().igual[0]) m.reply(coin().igual[1])
-            if (coin().coin[0]) return m.reply(coin().coin[1])
-            if (!m.args[0]) return m.reply(`Y el link?`)
-            try { m.react(rwait); await GDriveDl(args[0]).then(async (res) => { if (!res) return m.reply(res); conn.sendMessage(m.chat, { document: { url: res.downloadUrl }, mimetype: res.mimetype, fileName: `${res}` }, { quoted: m }); coin(true) }) } catch (e) { m.react(error) }
-        } break
-
-        case 'pinterest': case 'pin': {
-            if (!m.text) return m.reply(`${pushname} Please provide a search term!`);
-            m.react(rwait)
-            const pintst = await pinterest(m.text)
-            //const imagen = pinterest[Math.floor(Math.random() * (pinterest.length))]
-            const results = []
-            const Numero = 5
-            for (let i = 0; i < Numero && i < pintst.length; i++) { results.push(pintst[Math.floor(Math.random() * pintst.length)]) }
-            for (let i = 0; i < results.length; i++) { conn.sendMessage(m.chat, { image: { url: results[i] } }, { quoted: m }) }
-        } break
-
-        case 'gimage': case 'image': case 'imagen': {
-            if (coin().igual[0]) m.reply(coin().igual[1])
-            if (coin().coin[0]) return m.reply(coin().coin[1])
-
-            if (!m.text) return m.reply("¡Ingrese un término de búsqueda para obtener una imagen de Google!");
-            m.react(rwait)
-
-            try {
-                await gis(m.text, async (error, result) => {
-                    if (error) { return m.reply("Se ha producido un error al buscar imágenes.") }
-                    if (!result || result.length === 0) { return m.reply("No se han encontrado imágenes para el término de búsqueda dado.") }
-                    const images = result[Math.floor(Math.random() * result.length)].url
-                    try { conn.sendMessage(m.chat, { image: { url: images }, caption: `▢ *Resultado de:* ${m.text}\n▢  *Buscador: 『 Google 』*`, }, { quoted: m }); m.react(done); coin(true) } catch { m.react('❌') }
-
-                });
-            } catch { m.react(error) }
-        } break
-
-        case 'chatgpt': case 'gpt': case 'ia': case 'IA': {
-            if (coin().igual[0]) m.reply(coin().igual[1])
-            if (coin().coin[0]) return m.reply(coin().coin[1])
-            if (!m.text) return m.reply('Y el texto?')
-            m.react('\uD83D\uDCAC')
-            try {
-                await conn.sendPresenceUpdate('composing', m.chat)
-                const OpenAI = await fetchJson(`https://aemt.me/openai?text=${m.text}`)
-                var Texto = OpenAI.result
-                await m.reply(Texto); coin(true)
-            } catch { m.react(error) }
-        } break
-
-        case 'cleancloud': case 'cloudclean': case 'delfiles': case 'delfile': case 'mycloud': case 'editfile': case 'guardar': case 'savefile': case 'save': case 'savecloud': case 'sendfile': case 'listfile': {
-            const saveFiles = global.db.data.cloud[m.sender].saveFiles
-            const sms = m.SMS()
-
-            const nLimite = m.isROwner ? 99 : m.isOwner ? 19 : m.isPrems ? 9 : 4
-            const sLimite = m.isROwner ? '100' : m.isOwner ? '20' : m.isPrems ? '10' : '5'
-
-            const mtype = ['viewOnceMessageV2']
-            if (m.command == 'guardar' || m.command == 'save' || m.command == 'savecloud' || m.command == 'savefile') {
-                if (saveFiles.length > nLimite) return m.reply(`El limite es de ${sLimite} archivos por usuario.`)
-                let istrue = true
-                mtype.forEach(elemento => {
-                    const filesave = { fileName: m.text ? m.text : m.type(sms.message) == 'documentMessage' ? sms.message.documentMessage.fileName : 'My Archive', fecha: moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss'), fileMessage: sms }
-                    if (m.type(sms.message) == elemento) istrue = false
-                    if (istrue) { saveFiles.push(filesave); m.react(done); coin(true) } else { m.reply('El archivo no coincide con los formatos admitidos.'); m.react(error) }
-                })
-            }
-
-            const texto = (`● *User:* @${m.sender.split('@')[0]}\n▢ *Uso:* ${saveFiles.length}/${sLimite}${saveFiles[0] ? '\n\n' + saveFiles.map((objeto, indice) => `${indice + 1} ● *Name file :* ${objeto.fileName}\n▢ *Tipo :* ${m.type(objeto.fileMessage.message).split('Message').join('')}\n▢ *Ultima modificacion :* ${objeto.fecha}`).join('\n\n') : ''}`)
-
-            if (m.command == 'listfile' || m.command == 'mycloud') return conn.sendMessage(m.chat, { text: saveFiles[0] ? `${texto}\n\n${readMore}● @${m.sender.split('@')[0]} puedes utilizar el comando "senfile" y, utilizando el orden en el que se guardaron, especificar el numero correspondiente para enviarlo.\n\n• *Ejemplo:* sendfile 1` : `${texto}\n\n sin archivos \n\nResponda o envie un archivo con el comando *.savefile* para guardarlo.`, contextInfo: { mentionedJid: [...texto.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net') } }, { quoted: m })
-
-            if (m.command == 'sendfile') {
-                const regex = /\b(10|[1-9])\b/
-                if (!m.text) return m.reply(`Tienes ${saveFiles.length}/${sLimite}`)
-                const numero = m.text.match(regex);
-                if (!numero) return;
-                const indice = parseInt(numero[0], 10)
-                if (!isNaN(indice) && indice >= 1 && indice <= 10) {
-                    const file = saveFiles[indice - 1].fileMessage
-                    conn.copyNForward(m.chat, file)
-                } else { m.react(error) }
-            }
-            if (m.command == 'cleancloud' || m.command == 'cloudclean' || m.command == 'delfiles') {
-                try { saveFiles.splice(0, saveFiles.length); m.react('🗑') } catch { m.react(error) }
-            }
-
-            if (m.command == 'delfile') {
-                const regex = /\b(10|[1-9])\b/
-                if (!m.text) return m.reply(`Tienes ${saveFiles.length}/${sLimite}`)
-                const numero = m.text.match(regex);
-                if (!numero) return;
-                const indice = parseInt(numero[0], 10)
-                if (!isNaN(indice) && indice >= 1 && indice <= 10) { saveFiles.splice(indice - 1, 1); m.react(done) } else { m.reply('Índice fuera de rango o inválido.') }
-            }
-            if (m.command == 'editfile') {
-                let [array, fileName] = m.text.split`|`
-                const regex = /\b(10|[1-9])\b/
-                if (!array) return m.reply(`Separa el numero y el nuevo nombre con | \n*Ejemplo:* .editfile 1 | My archive`)
-                if (!fileName) return m.reply(`Separa el numero y el nuevo nombre con | \n*Ejemplo:* .editfile 1 | My archive`)
-                const numero = array.match(regex);
-                if (!numero) return;
-                const indice = parseInt(numero[0], 10)
-                if (!isNaN(indice) && indice >= 1 && indice <= 10) {
-                    const mensage = saveFiles[indice - 1].fileMessage.message
-                    try {
-                        saveFiles[indice - 1].fileName = fileName
-                        saveFiles[indice - 1].fecha = moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss')
-                        if (m.type(mensage) == 'documentMessage') {
-                            const filename = mensage.documentMessage.fileName
-                            const Extension = path.extname(filename)
-                            saveFiles[indice - 1].fileMessage.message.documentMessage.fileName = fileName + Extension;
-                            m.react(done)
+                } else
+                    if (m.command == 'ytmp4') {
+                        const urls = YoutTube(m.text)
+                        for (let i = 0; i < urls.length; i++) {
+                            try {
+                                const { title, thumb, Date, duration, channel, quality, contentLength, description, videoUrl } = await ytdl.mp4(urls[i])
+                                let cap = `*『 DV-YouTube 』*\n\n▢ *Título:* ${title}\n▢ *Calidad:* ${quality}`.trim()
+                                await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) };
+                            } catch { m.react(error) }
                         }
-                        m.react(done)
-                    } catch { m.react(error) }
-                } else { m.reply('Índice fuera de rango o inválido.') }
-            }
-        } break
+                    }
 
-        case 'sticker': case 's': {
-            const smsg = m.type(m.SMS().message)
-            if (coin().igual[0]) m.reply(coin().igual[1])
-            if (coin().coin[0]) return m.reply(coin().coin[1])
+            } break
 
-            if (smsg == 'imageMessage') {
-                let media = await conn.download()
-                await conn.sendImageAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); coin(true)
-            } else if (smsg == 'videoMessage') {
-                if (m.SMS().message.seconds > 12) return m.reply('Máximo 10 segundos!')
-                let media = await conn.download()
-                conn.sendVideoAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); coin(true)
-            } else {
-                m.reply(`Responde o envía un video/imagen utilizando lo siguiente comando: ${m.prefix + m.command}\nDuración del video: 1-9 segundos`)
-            }
-        } break
+            case 'yts': case 'ytsearch': {
+                if (coin().igual[0]) m.reply(coin().igual[1])
+                if (coin().coin[0]) return m.reply(coin().coin[1])
+                if (!m.text) return m.reply('Que quieres que busque en YouTube?')
+                m.react(rwait)
+                const vid = (await yts(m.text)).all[0]
+                const { thumbnail } = vid
+                let results = await yts(m.text)
+                let teks = results.all.map(v => {
+                    switch (v.type) {
+                        case 'video': return `▢ ${v.title}\n▢ *Link* : ${v.url}\n▢ *Duración* : ${v.timestamp}\n▢ *Subido :* ${v.ago}\n▢ *Vistas:* ${v.views}`.trim()
 
-        //RPG
-        case 'level': case 'nivel': case 'subirnivel': case 'lvl': case 'levelup': {
-            if (!(m.sender in global.db.data.users)) return m.reply(`No estas en mi base de datos`)
-            const User = global.db.data.users[m.sender]
-            let nivel = User.nivel
-            let Exp = User.exp
-            const NivelXp = (level) => { return level * global.rpg.precios.nivel }
-            let Texto = ''
-            while (Exp >= NivelXp(nivel + 1)) {
-                nivel += 1
-                const ExpB = NivelXp(nivel) * 0.01
-                const Role = global.rpg.role.find(r => r.nivel === (nivel > 99 ? 100 : nivel))
-                User.nivel = nivel
-                User.role = Role ? Role.name : ''
-                User.exp = premium(m.sender) ? User.exp - 0 : items(User.exp, ExpB) ? User.exp - ExpB : 500
-                Texto = (`*『 SUBES DE LEVEL 』*\n\n● *Nombre :* @${m.sender.split`@`[0]}\n▢ Nivel : *${nivel}*\n▢ Rango : *${User.role}*\n - ${ExpB} *XP*\n${User.nivel > 99 ? `\n● @${m.sender.split`@`[0]} Gracias por usar este Bot!` : '*Cuanto más interactúes con los bots, mayor será tu nivel*'}`)
-            }
+                        case 'canal': return `▢ *${v.name}* (${v.url})\n▢ ${v.subCountLabel} (${v.subCount}) Suscribirse\n▢ ${v.videoCount} videos`.trim()
+                    }
+                }).filter(v => v).join('\n\n________________________\n\n')
+                await conn.sendMessage(m.chat, { text: readMore + teks, contextInfo: { externalAdReply: { title: 'YouTube - Search', thumbnailUrl: thumbnail, mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) }
+            } break
 
-            if (Texto) return m.reply(Texto)
-            else { m.reply(`*『 TU NIVEL ACTUAL 』*\n\n● *Nombre :* @${m.sender.split`@`[0]}\n▢ Nivel : *${User.nivel}*\n▢ XP : *${User.exp}/${NivelXp(nivel + 1)}*\n▢ Rango : *${User.role}*\n\nTe falta *${NivelXp(nivel + 1) - Exp}* de *XP* para subir al nivel ${nivel + 1}${User.nivel > 99 ? `\n● @${m.sender.split`@`[0]} Gracias por usar este Bot!` : ''}`) }
-        } break
+            case 'tiktok': case 'tt': {
+                if (!m.args[0]) return m.reply(`Ejemplo :\n.tiktok https://vm.tiktok.com/ZM6SuhCKy/`)
+                m.react(rwait)
+                var ktt = await fetchJson(`https://www.tikwm.com/api/?url=${m.text}?hd=1`)
+                var p = ktt.data
+                try {
+                    var musicatiktok = p.music
+                    if (p.images) {
+                        var url = p.images
+                        var cptn = `*Titulo:* ${p.title}\n`
+                        cptn += `*Usuario:* ${p.author.nickname}\n`
+                        cptn += `*Reproducciones:* ${p.play_count}\n`
+                        cptn += `*Comentarios:* ${p.comment_count}\n`
+                        cptn += `*Descargas:* ${p.download_count}\n`
+                        cptn += `*Imagenes:* ${url.length}\n`
+                        cptn += `\nEnviando Medios`
+                        m.reply(cptn)
+                        for (let o = 0; o < url.length; o++) { await conn.sendMessage(m.chat, { [(/mp4/.test(url[o])) ? "video" : "image"]: { url: url[o] } }, { quoted: m }) }
+                        conn.sendMessage(m.chat, { audio: { url: musicatiktok }, mimetype: 'audio/mpeg' }); m.react(done)
+                    }
 
-        case 'minar': case 'mine': {
-            const tiempoEspera = global.rpg.cantidad.tiempoMinera
-            let hasil = Math.floor(Math.random() * global.rpg.cantidad.mineria)
-            let time = global.db.data.users[m.sender].lastmiming + tiempoEspera
-            if (new Date - global.db.data.users[m.sender].lastmiming < tiempoEspera) return m.reply(`Espera *${msToTime(time - new Date())}* para regresar a minar`)
-            global.db.data.users[m.sender].exp += hasil
-            m.reply(`*『 🎉 / Minaste  』${hasil} XP*`)
-            global.db.data.users[m.sender].lastmiming = new Date * 1
-        } break
+                    var url = p.play
+                    var cptn = `*Titulo:* ${p.title}\n`
+                    cptn += `*Usuario:* ${p.author.nickname}\n`
+                    cptn += `*Reproducciones:* ${p.play_count}\n`
+                    cptn += `*Comentarios:* ${p.comment_count}\n`
+                    cptn += `*Descargas:* ${p.download_count}\n`
+                    cptn += `\nBy KenisawaDev`
+                    await conn.sendMessage(m.chat, { video: { url: url }, caption: cptn }, { quoted: m })
+                    conn.sendMessage(m.chat, { audio: { url: musicatiktok }, mimetype: 'audio/mpeg' }); m.react(done)
+                } catch (e) { console.log(e); m.react(error) }
+            } break
 
-        case 'buy': case 'buyall': case 'comprar': {
-            const xppercoin = global.rpg.precios.coin
-            let count = m.command.replace(/^buy/i, '')
-            count = count ? /all/i.test(count) ? Math.floor(global.db.data.users[m.sender].exp / xppercoin) : parseInt(count) : m.args[0] ? parseInt(m.args[0]) : 1
-            count = Math.max(1, count)
-            if (global.db.data.users[m.sender].exp >= xppercoin * count) {
-                global.db.data.users[m.sender].exp -= xppercoin * count
-                global.db.data.users[m.sender].coin += count
-                m.reply(`\n┏╼I『 *Comprar* 』: + ${count}©️\n┗⊱ *Gastado* : -${xppercoin * count} XP`)
-            } else m.reply(`Lo siento, no tienes suficientes *XP* para comprar *${count}* coins / ©️`)
+            case 'gitclone': case 'git': case 'clone': {
+                const regex = /(?:https|git)(?::\/\/|@)github\.com[\/:]([^\/:]+)\/(.+)/i
+                if (coin().igual[0]) m.reply(coin().igual[1])
+                if (coin().coin[0]) return m.reply(coin().coin[1])
 
-        } break
+                if (!m.args[0]) m.reply('Y el link?')
+                if (!regex.test(m.args[0])) m.reply(`Link incorrecto`)
+                let [_, user, repo] = m.args[0].match(regex) || []
+                repo = repo.replace(/.git$/, '')
+                let url = `https://api.github.com/repos/${user}/${repo}/zipball`
+                let filename = (await fetch(url, { method: 'HEAD' })).headers.get('content-disposition').match(/attachment; filename=(.*)/)[1]
+                m.react(rwait)
+                try { conn.sendMessage(m.chat, { document: { url: url }, mimetype: 'document/zip', fileName: filename }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) } } catch { m.react(error); return }
+            } break
 
-        case 'robar': case 'rob': {
-            const { robar, tiempoRobar } = global.rpg.cantidad
-            let time = global.db.data.users[m.sender].lastrob + tiempoRobar
-            if (new Date - global.db.data.users[m.sender].lastrob < tiempoRobar) return m.reply(`¡Hey! Espera *${msToTime(time - new Date())}* para volver a robar`)
-            let who = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : false
+            //https://drive.google.com/file/d/1dmHlx1WTbH5yZoNa_ln325q5dxLn1QHU/view*
+            case 'gdrive': {
+                if (coin().igual[0]) m.reply(coin().igual[1])
+                if (coin().coin[0]) return m.reply(coin().coin[1])
+                if (!m.args[0]) return m.reply(`Y el link?`)
+                try { m.react(rwait); await GDriveDl(args[0]).then(async (res) => { if (!res) return m.reply(res); conn.sendMessage(m.chat, { document: { url: res.downloadUrl }, mimetype: res.mimetype, fileName: `${res}` }, { quoted: m }); if (!database('chats', m.chat).commands.rpg) { coin(true) } }) } catch (e) { m.react(error) }
+            } break
 
-            if (!who) return m.reply(`Etiqueta a alguien para robar`)
-            if (!(who in global.db.data.users)) return m.reply(`El usuario no se encuentra en mi base de datos`)
-            let users = global.db.data.users[who]
-            let rob = Math.floor(Math.random() * robar)
+            case 'pinterest': case 'pin': {
+                if (!m.text) return m.reply(`${pushname} Please provide a search term!`);
+                m.react(rwait)
+                const pintst = await pinterest(m.text)
+                const results = []
+                const Numero = 5
+                for (let i = 0; i < Numero && i < pintst.length; i++) { results.push(pintst[Math.floor(Math.random() * pintst.length)]) }
+                for (let i = 0; i < results.length; i++) { conn.sendMessage(m.chat, { image: { url: results[i] } }, { quoted: m }) }
+            } break
 
-            if (users.exp < rob) return m.reply(`@${who.split`@`[0]} tiene menos de *${robar} xp*`, null, { mentions: [who] })
-            global.db.data.users[m.sender].exp += rob
-            global.db.data.users[who].exp -= rob
+            case 'gimage': case 'image': case 'imagen': {
+                if (coin().igual[0]) m.reply(coin().igual[1])
+                if (coin().coin[0]) return m.reply(coin().coin[1])
 
-            m.reply(`*『 ROBASTE 』${rob} XP* a @${who.split`@`[0]}`, null, { mentions: [who] })
-            global.db.data.users[m.sender].lastrob = new Date * 1
-        } break
+                if (!m.text) return m.reply("¡Ingrese un término de búsqueda para obtener una imagen de Google!");
+                m.react(rwait)
 
-        case 'bal': case 'coins': case 'coin': case 'balance': {
-            let who = m.quoted ? m.quoted.sender : m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender
-            let user = global.db.data.users[who]
-            if (!(who in global.db.data.users)) return m.reply(`El usuario no se encuentra en mi base de datos`)
-            m.reply(`\n*『 BALANCE 』*\n● *Nombre* : @${who.split('@')[0]}\n▢ *coins* : ${m.isPrems ? '∞' : user.coin}\n▢ *nivel* : ${user.nivel}\n▢ *Rol* : ${user.role}\n▢ *XP* : Total ${user.exp}\n\n*NOTA :* Puedes comprar ©️ coins usando el comando\n*${prefix}buy < cantidad >*`)
-        } break
+                try {
+                    await gis(m.text, async (error, result) => {
+                        if (error) { return m.reply("Se ha producido un error al buscar imágenes.") }
+                        if (!result || result.length === 0) { return m.reply("No se han encontrado imágenes para el término de búsqueda dado.") }
+                        const images = result[Math.floor(Math.random() * result.length)].url
+                        try { conn.sendMessage(m.chat, { image: { url: images }, caption: `▢ *Resultado de:* ${m.text}\n▢  *Buscador: 『 Google 』*`, }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) } } catch { m.react('❌') }
 
-        case 'diario': case 'claim': case 'reclamar': {
-            const { claimFree, claimPrem, TiempoClaim } = global.rpg.cantidad
-            const User = global.db.data.users[m.sender]
-            let time = User.lastclaim + TiempoClaim
-            if (new Date - User.lastclaim < TiempoClaim) return m.reply(`*Ya recogiste tu recompensa diaria*\n\n🕚 Vuelve en *${msToTime(time - new Date())}*`)
-            User.exp += m.isPrems ? claimPrem : claimFree
-            m.reply(`\n *『 RECOMPENSA DIARIA 』*\n\n● *Has recibido: +${m.isPrems ? claimPrem : claimFree} XP*`)
-            User.lastclaim = new Date * 1
-        } break
+                    });
+                } catch { m.react(error) }
+            } break
 
-        case 'slot': {
-            const { exp, nivel } = database('users', m.sender)
+            case 'chatgpt': case 'gpt': case 'ia': case 'IA': {
+                if (coin().igual[0]) m.reply(coin().igual[1])
+                if (coin().coin[0]) return m.reply(coin().coin[1])
+                if (!m.text) return m.reply('Y el texto?')
+                m.react('\uD83D\uDCAC')
+                try {
+                    await conn.sendPresenceUpdate('composing', m.chat)
+                    const OpenAI = await fetchJson(`https://aemt.me/openai?text=${m.text}`)
+                    var Texto = OpenAI.result
+                    await m.reply(Texto); if (!database('chats', m.chat).commands.rpg) { coin(true) }
+                } catch { m.react(error) }
+            } break
 
-            if (coin().coin[0]) return m.reply(coin().coin[1])
-            if (exp < 300) return m.reply('Es necesario tener un mínimo de *300 XP* para poder usar este comando.')
-            if (nivel == 4 || nivel < 5) return m.reply('Para utilizar este comando, es necesario que te encuentres en el nivel 5 o en uno más avanzado.')
-            if (coin().igual[0]) m.reply(coin().igual[1])
+            case 'cleancloud': case 'cloudclean': case 'delfiles': case 'delfile': case 'mycloud': case 'editfile': case 'guardar': case 'savefile': case 'save': case 'savecloud': case 'sendfile': case 'listfile': {
+                const saveFiles = global.db.data.cloud[m.sender].saveFiles
+                const sms = m.SMS()
 
-            const frutas = ['🍎', '🍊', '🍇', '🍓', '🍒', '🍍', '🥝', '🍌']
+                const nLimite = m.isROwner ? 99 : m.isOwner ? 49 : m.isPrems ? 19 : 4
+                const sLimite = m.isROwner ? '100' : m.isOwner ? '20' : m.isPrems ? '10' : '5'
 
-            let rueda1 = [frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)]];
-            let rueda2 = [frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)]];
-            let rueda3 = [frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)]];
-
-            let texto = `🎰 ┃ *Resultado:*\n\n┏                             ┓\n   ${rueda1[0]} ┃ ${rueda2[0]} ┃ ${rueda3[0]}\n   ━━━━━━━━━━\n   ${rueda1[1]} ┃ ${rueda2[1]} ┃ ${rueda3[1]}\n   ━━━━━━━━━━\n   ${rueda1[2]} ┃ ${rueda2[2]} ┃ ${rueda3[2]}\n┗                             ┛\n\n`
-
-            if (rueda1[1] === rueda2[1] && rueda2[1] === rueda3[1]) {
-                texto += "● *¡Felicidades!* Las tres frutas del centro son iguales. *Ganaste 1000 XP*."
-                database('users', m.sender).exp += 1000
-                conn.sendMessage(m.chat, { audio: fs.readFileSync('./multimedia/audios/bara.m4a'), contextInfo: { externalAdReply: { title: `¡Felicidades! +1000 XP`, body: `Usuario de Zenn Bot MD`, thumbnailUrl: await conn.profilePictureUrl(m.sender, 'image') } }, fileName: `Bot.mp3`, mimetype: 'audio/mpeg', ptt: true }, { quoted: m })
-
-            } else if (rueda1[1] === rueda2[1] || rueda2[1] === rueda3[1] || rueda1[1] === rueda3[1]) {
-                texto += "● Dos frutas del centro son iguales. *Ganaste 500 XP*."
-                database('users', m.sender).exp += 500
-            } else {
-                texto += "● Las frutas del centro son diferentes. *Perdiste 200 XP*. U.U"
-                database('users', m.sender).exp -= 200
-            }
-
-            m.reply(texto)
-        } break
-
-        case 'ppt': {
-            const User = database('users', m.sender)
-            const Empate = 100
-            const ganar = 300
-            const perder = 200
-            if (User.exp < perder) return m.reply(`Es necesario tener un mínimo de *${perder} XP* para poder usar este comando.`)
-            if (!m.text) m.reply(`Seleccione piedra/papel/tijera\n\nEjemplo : *${prefix + m.command}* papel`)
-
-            const item = ['piedra', 'papel', 'tijera']
-            const randItem = item[Math.floor(Math.random() * (item.length))]
-
-            if (randItem == m.text) {
-                User.exp += Empate
-                m.reply(`▢ *Empate*\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\n🎁 Puntos *+${Empate} XP*`)
-            } else if (m.text == 'piedra') {
-                if (randItem == 'tijera') {
-                    User.exp += ganar
-                    m.reply(`▢ *Ganaste* 🎊\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\n🎁 Puntos *+${ganar} XP*`)
-                } else {
-                    User.exp = premium(m.sender) ? User.exp - 0 : items(User.exp, perder) ? User.exp - perder : 0
-                    m.reply(`▢ *Perdiste*\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\n Puntos *-${perder} XP*`)
+                const mtype = ['viewOnceMessageV2']
+                if (m.command == 'guardar' || m.command == 'save' || m.command == 'savecloud' || m.command == 'savefile') {
+                    if (saveFiles.length > nLimite) return m.reply(`El limite es de ${sLimite} archivos por usuario.`)
+                    let istrue = true
+                    mtype.forEach(elemento => {
+                        const filesave = { fileName: m.text ? m.text : m.type(sms.message) == 'documentMessage' ? sms.message.documentMessage.fileName : 'My Archive', fecha: moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss'), fileMessage: sms }
+                        if (m.type(sms.message) == elemento) istrue = false
+                        if (istrue) { saveFiles.push(filesave); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) } } else { m.reply('El archivo no coincide con los formatos admitidos.'); m.react(error) }
+                    })
                 }
-            } else if (m.text == 'tijera') {
-                if (randItem == 'papel') {
-                    User.exp += ganar
-                    m.reply(`▢ *Ganaste* 🎊\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\n🎁 Puntos *+${ganar} XP*`)
-                } else {
-                    User.exp = premium(m.sender) ? User.exp - 0 : items(User.exp, perder) ? User.exp - perder : 0
-                    m.reply(`▢ *Perdiste*\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\nPuntos *-${perder} XP*`)
+
+                const texto = (`● *User:* @${m.sender.split('@')[0]}\n▢ *Uso:* ${saveFiles.length}/${sLimite}${saveFiles[0] ? '\n\n' + saveFiles.map((objeto, indice) => `${indice + 1} ● *Name file :* ${objeto.fileName}\n▢ *Tipo :* ${m.type(objeto.fileMessage.message).split('Message').join('')}\n▢ *Ultima modificacion :* ${objeto.fecha}`).join('\n\n') : ''}`)
+
+                if (m.command == 'listfile' || m.command == 'mycloud') return conn.sendMessage(m.chat, { text: saveFiles[0] ? `${texto}\n\n${readMore}● @${m.sender.split('@')[0]} puedes utilizar el comando "senfile" y, utilizando el orden en el que se guardaron, especificar el numero correspondiente para enviarlo.\n\n• *Ejemplo:* sendfile 1` : `${texto}\n\n sin archivos \n\nResponda o envie un archivo con el comando *.savefile* para guardarlo.`, contextInfo: { mentionedJid: [...texto.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net') } }, { quoted: m })
+
+                if (m.command == 'sendfile') {
+                    const regex = /\b(10|[1-9])\b/
+                    if (!m.text) return m.reply(`Tienes ${saveFiles.length}/${sLimite}`)
+                    const numero = m.text.match(regex);
+                    if (!numero) return;
+                    const indice = parseInt(numero[0], 10)
+                    if (!isNaN(indice) && indice >= 1 && indice <= 10) {
+                        const file = saveFiles[indice - 1].fileMessage
+                        conn.copyNForward(m.chat, file)
+                    } else { m.react(error) }
                 }
-            } else if (m.text == 'papel') {
-                if (randItem == 'piedra') {
-                    User.exp += ganar
-                    m.reply(`▢ *Ganaste* 🎊\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\n🎁 Puntos *+${ganar} XP*`)
-                } else {
-                    User.exp = premium(m.sender) ? User.exp - 0 : items(User.exp, perder) ? User.exp - perder : 0
-                    m.reply(`▢ *Perdiste*\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\nPuntos *-${perder} XP*`)
+                if (m.command == 'cleancloud' || m.command == 'cloudclean' || m.command == 'delfiles') {
+                    try { saveFiles.splice(0, saveFiles.length); m.react('🗑') } catch { m.react(error) }
                 }
-            } else { m.reply(reseqv) }
-        } break
 
-        case 'transferir': {
-            if (!m.text) return m.reply(`• Para utilizar el comando cada parte de este debe estar separada por “|”. Espesifica el item (ejemplo coin, xp), la cantidad y el usuario de destino. transferir [ item ] | [ cantidad ] | [ destino ].\n\n• Ejemplo : *.transferir coin | 10 | @${m.sender.split`@`[0]}.*`)
+                if (m.command == 'delfile') {
+                    const regex = /\b(10|[1-9])\b/
+                    if (!m.text) return m.reply(`Tienes ${saveFiles.length}/${sLimite}`)
+                    const numero = m.text.match(regex);
+                    if (!numero) return;
+                    const indice = parseInt(numero[0], 10)
+                    if (!isNaN(indice) && indice >= 1 && indice <= 10) { saveFiles.splice(indice - 1, 1); m.react(done) } else { m.reply('Índice fuera de rango o inválido.') }
+                }
+                if (m.command == 'editfile') {
+                    let [array, fileName] = m.text.split`|`
+                    const regex = /\b(10|[1-9])\b/
+                    if (!array) return m.reply(`Separa el numero y el nuevo nombre con | \n*Ejemplo:* .editfile 1 | My archive`)
+                    if (!fileName) return m.reply(`Separa el numero y el nuevo nombre con | \n*Ejemplo:* .editfile 1 | My archive`)
+                    const numero = array.match(regex);
+                    if (!numero) return;
+                    const indice = parseInt(numero[0], 10)
+                    if (!isNaN(indice) && indice >= 1 && indice <= 10) {
+                        const mensage = saveFiles[indice - 1].fileMessage.message
+                        try {
+                            saveFiles[indice - 1].fileName = fileName
+                            saveFiles[indice - 1].fecha = moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss')
+                            if (m.type(mensage) == 'documentMessage') {
+                                const filename = mensage.documentMessage.fileName
+                                const Extension = path.extname(filename)
+                                saveFiles[indice - 1].fileMessage.message.documentMessage.fileName = fileName + Extension;
+                                m.react(done)
+                            }
+                            m.react(done)
+                        } catch { m.react(error) }
+                    } else { m.reply('Índice fuera de rango o inválido.') }
+                }
+            } break
 
-            if (conn.transferencia[m.sender]) return m.reply('Ya estas haciendo una transferencia')
-            const [objeto, cantidad, destino] = m.text.split('|')
-            if (!(objeto && cantidad && destino)) return m.reply(`• Para utilizar el comando cada parte de este debe estar separada por “|”. Espesifica el item (ejemplo coin, xp), la cantidad y el usuario de destino. transferir [ item ] | [ cantidad ] | [ destino ].\n\n• Ejemplo : *.transferir coin | 10 |  @${m.sender.split`@`[0]}.*`)
+            case 'sticker': case 's': {
+                const smsg = m.type(m.SMS().message)
+                if (coin().igual[0]) m.reply(coin().igual[1])
+                if (coin().coin[0]) return m.reply(coin().coin[1])
 
-            let UserDestino = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : destino ? (destino.replace(/[@ .+-]/g, '') + '@s.whatsapp.net') : ''
+                if (smsg == 'imageMessage') {
+                    let media = await conn.download()
+                    await conn.sendImageAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); if (!database('chats', m.chat).commands.rpg) { coin(true) }
+                } else if (smsg == 'videoMessage') {
+                    if (m.SMS().message.seconds > 12) return m.reply('Máximo 10 segundos!')
+                    let media = await conn.download()
+                    conn.sendVideoAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); if (!database('chats', m.chat).commands.rpg) { coin(true) }
+                } else {
+                    m.reply(`Responde o envía un video/imagen utilizando lo siguiente comando: ${m.prefix + m.command}\nDuración del video: 1-9 segundos`)
+                }
+            } break
+        }
+    }
 
-            if (!(UserDestino in global.db.data.users)) return m.reply(`El Usuario no está en mi base de datos`)
+    ////////////////////////RPG
+    if (!database('chats', m.chat).commands.rpg) {
+        switch (m.command) {
+            case 'level': case 'nivel': case 'subirnivel': case 'lvl': case 'levelup': {
+                if (!(m.sender in global.db.data.users)) return m.reply(`No estas en mi base de datos`)
+                const User = global.db.data.users[m.sender]
+                let nivel = User.nivel
+                let Exp = User.exp
+                const NivelXp = (level) => { return level * global.rpg.precios.nivel }
+                let Texto = ''
+                while (Exp >= NivelXp(nivel + 1)) {
+                    nivel += 1
+                    const ExpB = NivelXp(nivel) * 0.01
+                    const Role = global.rpg.role.find(r => r.nivel === (nivel > 99 ? 100 : nivel))
+                    User.nivel = nivel
+                    User.role = Role ? Role.name : ''
+                    User.exp = premium(m.sender) ? User.exp - 0 : items(User.exp, ExpB) ? User.exp - ExpB : 500
+                    Texto = (`*『 SUBES DE LEVEL 』*\n\n● *Nombre :* @${m.sender.split`@`[0]}\n▢ Nivel : *${nivel}*\n▢ Rango : *${User.role}*\n - ${ExpB} *XP*\n${User.nivel > 99 ? `\n● @${m.sender.split`@`[0]} Gracias por usar este Bot!` : '*Cuanto más interactúes con los bots, mayor será tu nivel*'}`)
+                }
 
-            const Cantidad = parseInt(cantidad)
-            const { exp, coin } = database('users', m.sender)
+                if (Texto) return m.reply(Texto)
+                else { m.reply(`*『 TU NIVEL ACTUAL 』*\n\n● *Nombre :* @${m.sender.split`@`[0]}\n▢ Nivel : *${User.nivel}*\n▢ XP : *${User.exp}/${NivelXp(nivel + 1)}*\n▢ Rango : *${User.role}*\n\nTe falta *${NivelXp(nivel + 1) - Exp}* de *XP* para subir al nivel ${nivel + 1}${User.nivel > 99 ? `\n● @${m.sender.split`@`[0]} Gracias por usar este Bot!` : ''}`) }
+            } break
 
-            let item = false
-            if (objeto == 'coin') {
-                if (m.isPrems && !m.isModr) return m.reply('Como usuario premium, dispones de una cantidad ilimitada de coins. Sin embargo, debido a esto no puedes compartir ninguna de estas coins')
+            case 'minar': case 'mine': {
+                const tiempoEspera = global.rpg.cantidad.tiempoMinera
+                let hasil = Math.floor(Math.random() * global.rpg.cantidad.mineria)
+                let time = global.db.data.users[m.sender].lastmiming + tiempoEspera
+                if (new Date - global.db.data.users[m.sender].lastmiming < tiempoEspera) return m.reply(`Espera *${msToTime(time - new Date())}* para regresar a minar`)
+                global.db.data.users[m.sender].exp += hasil
+                m.reply(`*『 🎉 / Minaste  』${hasil} XP*`)
+                global.db.data.users[m.sender].lastmiming = new Date * 1
+            } break
 
-                if (coin < Cantidad) return m.reply('No tienes sufientes coins para transferir'); item = 'coin'
-            } else if (objeto == 'exp' || objeto == 'xp') { if (exp < Cantidad) return m.reply('No tienes sufiente *EXP* para transferir'); item = 'exp' }
+            case 'buy': case 'buyall': case 'comprar': {
+                const xppercoin = global.rpg.precios.coin
+                let count = m.command.replace(/^buy/i, '')
+                count = count ? /all/i.test(count) ? Math.floor(global.db.data.users[m.sender].exp / xppercoin) : parseInt(count) : m.args[0] ? parseInt(m.args[0]) : 1
+                count = Math.max(1, count)
+                if (global.db.data.users[m.sender].exp >= xppercoin * count) {
+                    global.db.data.users[m.sender].exp -= xppercoin * count
+                    global.db.data.users[m.sender].coin += count
+                    m.reply(`\n┏╼I『 *Comprar* 』: + ${count}©️\n┗⊱ *Gastado* : -${xppercoin * count} XP`)
+                } else m.reply(`Lo siento, no tienes suficientes *XP* para comprar *${count}* coins / ©️`)
 
-            if (!item) return m.reply('El item a transferir no existe en base de datos')
-            const numero = UserDestino.split`@`[0]
+            } break
 
-            conn.transferencia[m.sender] = {
-                User: m.sender,
-                destino: UserDestino,
-                numero: numero,
-                object: { item: item, cantidad: Cantidad },
-                message: m.key,
-                setTimeout: setTimeout(() => (m.reply('Se acabó el tiempo, transferencia cancelada'), delete conn.transferencia[m.sender]), 60 * 1000)
-            }
+            case 'robar': case 'rob': {
+                const { robar, tiempoRobar } = global.rpg.cantidad
+                let time = global.db.data.users[m.sender].lastrob + tiempoRobar
+                if (new Date - global.db.data.users[m.sender].lastrob < tiempoRobar) return m.reply(`¡Hey! Espera *${msToTime(time - new Date())}* para volver a robar`)
+                let who = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : false
 
-            m.reply(`¿Está seguro de que desea transferir *${Cantidad} ${objeto}* a  *@${UserDestino.split('@')[0]}* ?\n\nTienes  *60* segundos. Confirme  que desea realizar la transferencia repondiendo con un 'si'. Si no esta deacuerdo, puede responder con un 'no' para cancelar esta acción`.trim())
-        } break;
+                if (!who) return m.reply(`Etiqueta a alguien para robar`)
+                if (!(who in global.db.data.users)) return m.reply(`El usuario no se encuentra en mi base de datos`)
+                let users = global.db.data.users[who]
+                let rob = Math.floor(Math.random() * robar)
 
-        case 'unreg': {
-            const user = database('users', m.sender)
-            if (!user.registered) return m.sms('unreg')
-            if (!m.args[0]) m.reply(`*Ingrese su número de serie*\nVerifique su número de serie con el comando:\n\n*${prefix}nserie*`)
-            let NumeroSerie = createHash('md5').update(m.sender).digest('hex')
-            if (!(m.args[0] == NumeroSerie)) m.reply('Número de serie incorrecto!')
-            user.registered = false
-            m.reply(`Registro eliminado ✓`)
-        } break
+                if (users.exp < rob) return m.reply(`@${who.split`@`[0]} tiene menos de *${robar} xp*`, null, { mentions: [who] })
+                global.db.data.users[m.sender].exp += rob
+                global.db.data.users[who].exp -= rob
 
-        case 'nserie': case 'sn': case 'mysn': {
-            const user = database('users', m.sender)
-            if (!user.registered) return m.sms('unreg')
-            let NumeroSerie = createHash('md5').update(m.sender).digest('hex')
-            m.reply(`\n● *Numero de serie* : ${NumeroSerie}`.trim())
-        } break
+                m.reply(`*『 ROBASTE 』${rob} XP* a @${who.split`@`[0]}`, null, { mentions: [who] })
+                global.db.data.users[m.sender].lastrob = new Date * 1
+            } break
 
-        case 'verify': case 'reg': case 'register': case 'registrar': {
-            let Reg = /\|?(.*)([.|] *?)([0-9]*)$/i
-            const user = database('users', m.sender)
+            case 'bal': case 'coins': case 'coin': case 'balance': {
+                let who = m.quoted ? m.quoted.sender : m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender
+                let user = global.db.data.users[who]
+                if (!(who in global.db.data.users)) return m.reply(`El usuario no se encuentra en mi base de datos`)
+                m.reply(`\n*『 BALANCE 』*\n● *Nombre* : @${who.split('@')[0]}\n▢ *coins* : ${m.isPrems ? '∞' : user.coin}\n▢ *nivel* : ${user.nivel}\n▢ *Rol* : ${user.role}\n▢ *XP* : Total ${user.exp}\n\n*NOTA :* Puedes comprar ©️ coins usando el comando\n*${prefix}buy < cantidad >*`)
+            } break
 
-            if (user.registered === true) return m.reply(`Ya estás registrado\n\n¿Quiere volver a registrarse?\n\nUse este comando para eliminar su registro \n*${prefix}unreg* <Número de serie>`)
+            case 'diario': case 'claim': case 'reclamar': {
+                const { claimFree, claimPrem, TiempoClaim } = global.rpg.cantidad
+                const User = global.db.data.users[m.sender]
+                let time = User.lastclaim + TiempoClaim
+                if (new Date - User.lastclaim < TiempoClaim) return m.reply(`*Ya recogiste tu recompensa diaria*\n\n🕚 Vuelve en *${msToTime(time - new Date())}*`)
+                User.exp += m.isPrems ? claimPrem : claimFree
+                m.reply(`\n *『 RECOMPENSA DIARIA 』*\n\n● *Has recibido: +${m.isPrems ? claimPrem : claimFree} XP*`)
+                User.lastclaim = new Date * 1
+            } break
 
-            if (!Reg.test(m.text)) return m.reply(`Formato incorrecto\n\n Uso del comamdo: *${prefix + command} nombre.edad*\nEjemplo : *${prefix + command}* ${m.name}.16`)
+            case 'slot': {
+                const { exp, nivel } = database('users', m.sender)
 
-            let [_, name, splitter, age] = m.text.match(Reg)
+                if (coin().coin[0]) return m.reply(coin().coin[1])
+                if (exp < 300) return m.reply('Es necesario tener un mínimo de *300 XP* para poder usar este comando.')
+                if (nivel == 4 || nivel < 5) return m.reply('Para utilizar este comando, es necesario que te encuentres en el nivel 5 o en uno más avanzado.')
+                if (coin().igual[0]) m.reply(coin().igual[1])
 
-            if (!name) return m.reply('El nombre no puede estar vacío')
-            if (!age) return m.reply('La edad no puede estar vacía')
-            if (name.length >= 30) return m.reply('El nombre es demasiado largo')
-            age = parseInt(age)
-            if (age > 100) return m.reply('Mas de 100 años, de verdad?')
-            if (age < 5) return m.reply('Menos de 5 años, de verdad?')
+                const frutas = ['🍎', '🍊', '🍇', '🍓', '🍒', '🍍', '🥝', '🍌']
 
-            user.name = name.trim()
-            user.age = age
-            user.registered = true
+                let rueda1 = [frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)]];
+                let rueda2 = [frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)]];
+                let rueda3 = [frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)], frutas[Math.floor(Math.random() * frutas.length)]];
 
-            let NumeroSerie = createHash('md5').update(m.sender).digest('hex')
+                let texto = `🎰 ┃ *Resultado:*\n\n┏                             ┓\n   ${rueda1[0]} ┃ ${rueda2[0]} ┃ ${rueda3[0]}\n   ━━━━━━━━━━\n   ${rueda1[1]} ┃ ${rueda2[1]} ┃ ${rueda3[1]}\n   ━━━━━━━━━━\n   ${rueda1[2]} ┃ ${rueda2[2]} ┃ ${rueda3[2]}\n┗                             ┛\n\n`
 
-            m.reply(`『 *REGISTRADO* 』\n● *Nombre:* ${name}\n▢ *Edad* : ${age} años\n▢ *Numero de serie* :\n${NumeroSerie}\n\n*${prefix}help* para ver el Menu`.trim())
-        } break
+                if (rueda1[1] === rueda2[1] && rueda2[1] === rueda3[1]) {
+                    texto += "● *¡Felicidades!* Las tres frutas del centro son iguales. *Ganaste 1000 XP*."
+                    database('users', m.sender).exp += 1000
+                    conn.sendMessage(m.chat, { audio: fs.readFileSync('./multimedia/audios/bara.m4a'), contextInfo: { externalAdReply: { title: `¡Felicidades! +1000 XP`, body: `Usuario de Zenn Bot MD`, thumbnailUrl: await conn.profilePictureUrl(m.sender, 'image') } }, fileName: `Bot.mp3`, mimetype: 'audio/mpeg', ptt: true }, { quoted: m })
 
+                } else if (rueda1[1] === rueda2[1] || rueda2[1] === rueda3[1] || rueda1[1] === rueda3[1]) {
+                    texto += "● Dos frutas del centro son iguales. *Ganaste 500 XP*."
+                    database('users', m.sender).exp += 500
+                } else {
+                    texto += "● Las frutas del centro son diferentes. *Perdiste 200 XP*. U.U"
+                    database('users', m.sender).exp = premium(m.sender) ? exp - 0 : exp - 200
+                }
+
+                m.reply(texto)
+            } break
+
+            case 'ppt': {
+                const User = database('users', m.sender)
+                const Empate = 100
+                const ganar = 300
+                const perder = 200
+                if (User.exp < perder) return m.reply(`Es necesario tener un mínimo de *${perder} XP* para poder usar este comando.`)
+                if (!m.text) m.reply(`Seleccione piedra/papel/tijera\n\nEjemplo : *${prefix + m.command}* papel`)
+
+                const item = ['piedra', 'papel', 'tijera']
+                const randItem = item[Math.floor(Math.random() * (item.length))]
+
+                if (randItem == m.text) {
+                    User.exp += Empate
+                    m.reply(`▢ *Empate*\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\n🎁 Puntos *+${Empate} XP*`)
+                } else if (m.text == 'piedra') {
+                    if (randItem == 'tijera') {
+                        User.exp += ganar
+                        m.reply(`▢ *Ganaste* 🎊\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\n🎁 Puntos *+${ganar} XP*`)
+                    } else {
+                        User.exp = premium(m.sender) ? User.exp - 0 : items(User.exp, perder) ? User.exp - perder : 0
+                        m.reply(`▢ *Perdiste*\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\n Puntos *-${perder} XP*`)
+                    }
+                } else if (m.text == 'tijera') {
+                    if (randItem == 'papel') {
+                        User.exp += ganar
+                        m.reply(`▢ *Ganaste* 🎊\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\n🎁 Puntos *+${ganar} XP*`)
+                    } else {
+                        User.exp = premium(m.sender) ? User.exp - 0 : items(User.exp, perder) ? User.exp - perder : 0
+                        m.reply(`▢ *Perdiste*\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\nPuntos *-${perder} XP*`)
+                    }
+                } else if (m.text == 'papel') {
+                    if (randItem == 'piedra') {
+                        User.exp += ganar
+                        m.reply(`▢ *Ganaste* 🎊\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\n🎁 Puntos *+${ganar} XP*`)
+                    } else {
+                        User.exp = premium(m.sender) ? User.exp - 0 : items(User.exp, perder) ? User.exp - perder : 0
+                        m.reply(`▢ *Perdiste*\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\nPuntos *-${perder} XP*`)
+                    }
+                } else { m.reply(reseqv) }
+            } break
+
+            case 'transferir': {
+                if (!m.text) return m.reply(`• Para utilizar el comando cada parte de este debe estar separada por “|”. Espesifica el item (ejemplo coin, xp), la cantidad y el usuario de destino. transferir [ item ] | [ cantidad ] | [ destino ].\n\n• Ejemplo : *.transferir coin | 10 | @${m.sender.split`@`[0]}.*`)
+
+                if (conn.transferencia[m.sender]) return m.reply('Ya estas haciendo una transferencia')
+                const [objeto, cantidad, destino] = m.text.split('|')
+                if (!(objeto && cantidad && destino)) return m.reply(`• Para utilizar el comando cada parte de este debe estar separada por “|”. Espesifica el item (ejemplo coin, xp), la cantidad y el usuario de destino. transferir [ item ] | [ cantidad ] | [ destino ].\n\n• Ejemplo : *.transferir coin | 10 |  @${m.sender.split`@`[0]}.*`)
+
+                let UserDestino = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : destino ? (destino.replace(/[@ .+-]/g, '') + '@s.whatsapp.net') : ''
+
+                if (!(UserDestino in global.db.data.users)) return m.reply(`El Usuario no está en mi base de datos`)
+
+                const Cantidad = parseInt(cantidad)
+                const { exp, coin } = database('users', m.sender)
+
+                let item = false
+                if (objeto == 'coin') {
+                    if (m.isPrems && !m.isModr) return m.reply('Como usuario premium, dispones de una cantidad ilimitada de coins. Sin embargo, debido a esto no puedes compartir ninguna de estas coins')
+
+                    if (coin < Cantidad) return m.reply('No tienes sufientes coins para transferir'); item = 'coin'
+                } else if (objeto == 'exp' || objeto == 'xp') { if (exp < Cantidad) return m.reply('No tienes sufiente *EXP* para transferir'); item = 'exp' }
+
+                if (!item) return m.reply('El item a transferir no existe en base de datos')
+                const numero = UserDestino.split`@`[0]
+
+                conn.transferencia[m.sender] = {
+                    User: m.sender,
+                    destino: UserDestino,
+                    numero: numero,
+                    object: { item: item, cantidad: Cantidad },
+                    message: m.key,
+                    setTimeout: setTimeout(() => (m.reply('Se acabó el tiempo, transferencia cancelada'), delete conn.transferencia[m.sender]), 60 * 1000)
+                }
+
+                m.reply(`¿Está seguro de que desea transferir *${Cantidad} ${objeto}* a  *@${UserDestino.split('@')[0]}* ?\n\nTienes  *60* segundos. Confirme  que desea realizar la transferencia repondiendo con un 'si'. Si no esta deacuerdo, puede responder con un 'no' para cancelar esta acción`.trim())
+            } break;
+
+            case 'unreg': {
+                const user = database('users', m.sender)
+                if (!user.registered) return m.sms('unreg')
+                if (!m.args[0]) m.reply(`*Ingrese su número de serie*\nVerifique su número de serie con el comando:\n\n*${prefix}nserie*`)
+                let NumeroSerie = createHash('md5').update(m.sender).digest('hex')
+                if (!(m.args[0] == NumeroSerie)) m.reply('Número de serie incorrecto!')
+                user.registered = false
+                m.reply(`Registro eliminado ✓`)
+            } break
+
+            case 'nserie': case 'sn': case 'mysn': {
+                const user = database('users', m.sender)
+                if (!user.registered) return m.sms('unreg')
+                let NumeroSerie = createHash('md5').update(m.sender).digest('hex')
+                m.reply(`\n● *Numero de serie* : ${NumeroSerie}`.trim())
+            } break
+
+            case 'verify': case 'reg': case 'register': case 'registrar': {
+                let Reg = /\|?(.*)([.|] *?)([0-9]*)$/i
+                const user = database('users', m.sender)
+
+                if (user.registered === true) return m.reply(`Ya estás registrado\n\n¿Quiere volver a registrarse?\n\nUse este comando para eliminar su registro \n*${prefix}unreg* <Número de serie>`)
+
+                if (!Reg.test(m.text)) return m.reply(`Formato incorrecto\n\n Uso del comamdo: *${prefix + command} nombre.edad*\nEjemplo : *${prefix + command}* ${m.name}.16`)
+
+                let [_, name, splitter, age] = m.text.match(Reg)
+
+                if (!name) return m.reply('El nombre no puede estar vacío')
+                if (!age) return m.reply('La edad no puede estar vacía')
+                if (name.length >= 30) return m.reply('El nombre es demasiado largo')
+                age = parseInt(age)
+                if (age > 100) return m.reply('Mas de 100 años, de verdad?')
+                if (age < 5) return m.reply('Menos de 5 años, de verdad?')
+
+                user.name = name.trim()
+                user.age = age
+                user.registered = true
+
+                let NumeroSerie = createHash('md5').update(m.sender).digest('hex')
+
+                m.reply(`『 *REGISTRADO* 』\n● *Nombre:* ${name}\n▢ *Edad* : ${age} años\n▢ *Numero de serie* :\n${NumeroSerie}\n\n*${prefix}help* para ver el Menu`.trim())
+            } break
+        }
+    }
+
+    ////////////////////////RANDOM
+    switch (m.command) {
         case 'info': case 'informacion': {
             let format = sizeFormatter({ std: 'JEDEC', decimalPlaces: 2, keepTrailingZeroes: false, render: (literal, symbol) => `${literal} ${symbol}B` })
             const used = process.memoryUsage()
@@ -971,7 +1052,10 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
             let vcard = `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:Zeppt\nitem.ORG: Creador del Bot\nitem1.TEL;waid=5216673877887:+52 667 387 7887\nEND:VCARD`
             let a = await conn.sendMessage(m.chat, { contacts: { displayName: 'ZennBot MD', contacts: [{ vcard }] } }, { quoted: m })
         } break
+    }
 
+    ////////////////////////CREADOR
+    switch (m.command) {
         case 'addexp': case 'addxp': case 'addcoin': {
             let who
             if (m.isGroup) who = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : m.text.replace(/[^0-9]/g, '') + '@s.whatsapp.net'
@@ -1172,7 +1256,6 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
                     if (stdout) return m.reply(stdout)
                 })
             }
-
     }
 }
 
