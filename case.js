@@ -457,14 +457,14 @@ export async function sendCase(conn, m, store) {
 • ${isBanned ? '( ✓ )' : '( ✗ )'} : Baneado
 • ${welcome ? '( ✓ )' : '( ✗ )'} : Bienvenida
 • ${antiLink ? '( ✓ )' : '( ✗ )'} : Anti-Link
-• ${commands.rpg ? '( ✓ )' : '( ✗ )'} : comandos rpg
-• ${commands.servicio ? '( ✓ )' : '( ✗ )'} : comandos de descargas`).trim()
+• ${commands.rpg ? '( ✗ )' : '( ✓ )'} : comandos rpg
+• ${commands.servicio ? '( ✗ )' : '( ✓ )'} : comandos de descargas`).trim()
             conn.sendMessage(m.chat, { text: text, mentions: [m.sender] }, { ephemeralExpiration: 24 * 3600, quoted: { key: { participant: '0@s.whatsapp.net' }, message: { documentMessage: { title: `[ ESTADO BOT ]`, jpegThumbnail: fs.readFileSync('./multimedia/imagenes/thumbnail.jpg') } } } })
-        }
+        } break
     }
 
     ////////////////////////DESCARGAS
-    if (!database('chats', m.chat).commands.servicio) {
+    if (database('chats', m.chat).commands.servicio) {
         switch (m.command) {
             case 'mediafire': case 'mf': {
                 if (!m.args[0]) return m.reply('Y el link?')
@@ -501,7 +501,7 @@ Enviando archivo${readMore}`.trim();
                     try {
                         await sendMsge('Cargando audio'); m.react(rwait)
                         const mp3 = await dlmp3(_Url)
-                        conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${title}.mp3` }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) }; fs.unlinkSync(mp3.path)
+                        conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${title}.mp3` }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { coin(true) }; fs.unlinkSync(mp3.path)
                     } catch (e) { m.react(error); return }
                 }
 
@@ -510,7 +510,7 @@ Enviando archivo${readMore}`.trim();
                         await sendMsge('Cargando video'); m.react(rwait)
                         const { title, thumb, Date, duration, channel, quality, contentLength, description, videoUrl } = await ytdl.mp4(_Url)
                         let cap = `*『 DV-YouTube 』*\n\n▢ *Título:* ${title}\n▢ *Calidad:* ${quality}`.trim()
-                        await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) }
+                        await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { coin(true) }
                     } catch { m.react(error); return }
                 }
 
@@ -526,7 +526,7 @@ Enviando archivo${readMore}`.trim();
                     for (let i = 0; i < urls.length; i++) {
                         try {
                             const mp3 = await dlmp3(urls[i])
-                            conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: mp3.info.title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${mp3.info.title}.mp3` }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) }; fs.unlinkSync(mp3.path)
+                            conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: mp3.info.title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${mp3.info.title}.mp3` }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { coin(true) }; fs.unlinkSync(mp3.path)
                         } catch { m.react(error) }
                     }
                 } else
@@ -536,7 +536,7 @@ Enviando archivo${readMore}`.trim();
                             try {
                                 const { title, thumb, Date, duration, channel, quality, contentLength, description, videoUrl } = await ytdl.mp4(urls[i])
                                 let cap = `*『 DV-YouTube 』*\n\n▢ *Título:* ${title}\n▢ *Calidad:* ${quality}`.trim()
-                                await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) };
+                                await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { coin(true) };
                             } catch { m.react(error) }
                         }
                     }
@@ -558,7 +558,7 @@ Enviando archivo${readMore}`.trim();
                         case 'canal': return `▢ *${v.name}* (${v.url})\n▢ ${v.subCountLabel} (${v.subCount}) Suscribirse\n▢ ${v.videoCount} videos`.trim()
                     }
                 }).filter(v => v).join('\n\n________________________\n\n')
-                await conn.sendMessage(m.chat, { text: readMore + teks, contextInfo: { externalAdReply: { title: 'YouTube - Search', thumbnailUrl: thumbnail, mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) }
+                await conn.sendMessage(m.chat, { text: readMore + teks, contextInfo: { externalAdReply: { title: 'YouTube - Search', thumbnailUrl: thumbnail, mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { coin(true) }
             } break
 
             case 'tiktok': case 'tt': {
@@ -606,7 +606,7 @@ Enviando archivo${readMore}`.trim();
                 let url = `https://api.github.com/repos/${user}/${repo}/zipball`
                 let filename = (await fetch(url, { method: 'HEAD' })).headers.get('content-disposition').match(/attachment; filename=(.*)/)[1]
                 m.react(rwait)
-                try { conn.sendMessage(m.chat, { document: { url: url }, mimetype: 'document/zip', fileName: filename }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) } } catch { m.react(error); return }
+                try { conn.sendMessage(m.chat, { document: { url: url }, mimetype: 'document/zip', fileName: filename }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { coin(true) } } catch { m.react(error); return }
             } break
 
             //https://drive.google.com/file/d/1dmHlx1WTbH5yZoNa_ln325q5dxLn1QHU/view*
@@ -614,7 +614,7 @@ Enviando archivo${readMore}`.trim();
                 if (coin().igual[0]) m.reply(coin().igual[1])
                 if (coin().coin[0]) return m.reply(coin().coin[1])
                 if (!m.args[0]) return m.reply(`Y el link?`)
-                try { m.react(rwait); await GDriveDl(args[0]).then(async (res) => { if (!res) return m.reply(res); conn.sendMessage(m.chat, { document: { url: res.downloadUrl }, mimetype: res.mimetype, fileName: `${res}` }, { quoted: m }); if (!database('chats', m.chat).commands.rpg) { coin(true) } }) } catch (e) { m.react(error) }
+                try { m.react(rwait); await GDriveDl(args[0]).then(async (res) => { if (!res) return m.reply(res); conn.sendMessage(m.chat, { document: { url: res.downloadUrl }, mimetype: res.mimetype, fileName: `${res}` }, { quoted: m }); if (database('chats', m.chat).commands.rpg) { coin(true) } }) } catch (e) { m.react(error) }
             } break
 
             case 'pinterest': case 'pin': {
@@ -639,7 +639,7 @@ Enviando archivo${readMore}`.trim();
                         if (error) { return m.reply("Se ha producido un error al buscar imágenes.") }
                         if (!result || result.length === 0) { return m.reply("No se han encontrado imágenes para el término de búsqueda dado.") }
                         const images = result[Math.floor(Math.random() * result.length)].url
-                        try { conn.sendMessage(m.chat, { image: { url: images }, caption: `▢ *Resultado de:* ${m.text}\n▢  *Buscador: 『 Google 』*`, }, { quoted: m }); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) } } catch { m.react('❌') }
+                        try { conn.sendMessage(m.chat, { image: { url: images }, caption: `▢ *Resultado de:* ${m.text}\n▢  *Buscador: 『 Google 』*`, }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { coin(true) } } catch { m.react('❌') }
 
                     });
                 } catch { m.react(error) }
@@ -654,7 +654,7 @@ Enviando archivo${readMore}`.trim();
                     await conn.sendPresenceUpdate('composing', m.chat)
                     const OpenAI = await fetchJson(`https://aemt.me/openai?text=${m.text}`)
                     var Texto = OpenAI.result
-                    await m.reply(Texto); if (!database('chats', m.chat).commands.rpg) { coin(true) }
+                    await m.reply(Texto); if (database('chats', m.chat).commands.rpg) { coin(true) }
                 } catch { m.react(error) }
             } break
 
@@ -672,7 +672,7 @@ Enviando archivo${readMore}`.trim();
                     mtype.forEach(elemento => {
                         const filesave = { fileName: m.text ? m.text : m.type(sms.message) == 'documentMessage' ? sms.message.documentMessage.fileName : 'My Archive', fecha: moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss'), fileMessage: sms }
                         if (m.type(sms.message) == elemento) istrue = false
-                        if (istrue) { saveFiles.push(filesave); m.react(done); if (!database('chats', m.chat).commands.rpg) { coin(true) } } else { m.reply('El archivo no coincide con los formatos admitidos.'); m.react(error) }
+                        if (istrue) { saveFiles.push(filesave); m.react(done); if (database('chats', m.chat).commands.rpg) { coin(true) } } else { m.reply('El archivo no coincide con los formatos admitidos.'); m.react(error) }
                     })
                 }
 
@@ -735,11 +735,11 @@ Enviando archivo${readMore}`.trim();
 
                 if (smsg == 'imageMessage') {
                     let media = await conn.download()
-                    await conn.sendImageAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); if (!database('chats', m.chat).commands.rpg) { coin(true) }
+                    await conn.sendImageAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); if (database('chats', m.chat).commands.rpg) { coin(true) }
                 } else if (smsg == 'videoMessage') {
                     if (m.SMS().message.seconds > 12) return m.reply('Máximo 10 segundos!')
                     let media = await conn.download()
-                    conn.sendVideoAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); if (!database('chats', m.chat).commands.rpg) { coin(true) }
+                    conn.sendVideoAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); if (database('chats', m.chat).commands.rpg) { coin(true) }
                 } else {
                     m.reply(`Responde o envía un video/imagen utilizando lo siguiente comando: ${m.prefix + m.command}\nDuración del video: 1-9 segundos`)
                 }
@@ -748,7 +748,7 @@ Enviando archivo${readMore}`.trim();
     }
 
     ////////////////////////RPG
-    if (!database('chats', m.chat).commands.rpg) {
+    if (database('chats', m.chat).commands.rpg) {
         switch (m.command) {
             case 'level': case 'nivel': case 'subirnivel': case 'lvl': case 'levelup': {
                 if (!(m.sender in global.db.data.users)) return m.reply(`No estas en mi base de datos`)

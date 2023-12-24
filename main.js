@@ -160,8 +160,8 @@ async function StartBot() {
         if (!('antiLink' in chat)) chat.antiLink = false
       } else global.db.data.chats[m.chat] = {
         commands: {
-          servicio: false,
-          rpg: false,
+          servicio: true,
+          rpg: true,
         },
         isBanned: false,
         welcome: false,
