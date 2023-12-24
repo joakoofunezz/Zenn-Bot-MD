@@ -52,6 +52,7 @@ async function StartBot() {
     mobile: useMobile,
     browser: opcion == '1' ? ['ZennBot-MD', 'Edge', '2.0.0'] : useQrcode ? ['ZennBot-MD', 'Edge', '2.0.0'] : ['Chrome (Linux)', '', ''],
     auth: state,
+    generateHighQualityLinkPreview: true,
     version
   }
 
@@ -204,6 +205,8 @@ async function StartBot() {
 
     if (global.db.data.chats[m.chat].antiTraba) {
       if (m.isAdmin) return;
+      if (m.isOwner) return;
+      if (m.isROwner) return;
       if (m.Bot == m.sender) return;
       if (m.budy.length > 4000) {
         await conn.sendMessage(m.chat, { text: `*Se ha detectado un mensaje que contiene muchos caracteres*\n@${m.sender.split("@")[0]} Adios...\n`, mentions: [m.sender] })
