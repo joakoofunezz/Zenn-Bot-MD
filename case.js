@@ -474,8 +474,8 @@ export async function sendCase(conn, m, store) {
             if (!m.isAdmin) return m.sms('admin')
             if (!m.text) return m.reply('Este comando tiene la capacidad de eliminar a varios usuarios simultáneamente. Por favor, proporciona una lista de los usuarios que deseas eliminar, asegurándote de etiquetar a cada uno de ellos')
 
-            let numeros = m.text.match(/(@\d+|\b\d+\b)/g)
-            numeros = numeros.map(numero => numero.startsWith('@') ? numero.substring(1) + '@s.whatsapp.net' : numero + '@s.whatsapp.net')
+            let numeros = m.text.replace(/\s|\-|\(|\)|\+|\@/g, '')
+            numeros = numeros.map(numero => numero + '@s.whatsapp.net')
 
             if (numeros.map(owner => owner[0] + '@s.whatsapp.net').includes(conn.user.jid)) return m.reply('El número asociado al bot no debe incluirse en la lista de usuarios a eliminar.')
 
