@@ -241,7 +241,7 @@ export async function sendCase(conn, m, store) {
             return m.reply('● *Acción Cancelada ✓*')
         }
 
-        if (m.body.toLowerCase().includes('no')) {
+        if (m.body.toLowerCase().includes('si')) {
             console.log(JSON.stringify(Numeros, undefined, 2))
             for (let i = 0; i < Numeros.length; i++) { await conn.groupParticipantsUpdate(chat, [Numeros[i]], 'remove') }
             await conn.sendMessage(m.chat, { text: `Se eliminaron *${Numeros.length}* participantes ✓`, mentions: [m.sender] }, { ephemeralExpiration: 24 * 3600, quoted: { key: { participant: '0@s.whatsapp.net' }, message: { documentMessage: { title: `Acción ejecutada por\nUser : ${m.name}`, jpegThumbnail: null } } } })
