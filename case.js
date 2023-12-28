@@ -2,13 +2,13 @@
 // Exporta la función sendCase que maneja los comandos
 
 import { pinterest } from '@bochilteam/scraper'
-import PhoneNumber from 'awesome-phonenumber'
+import gtts from 'node-gtts';
 import axios from 'axios'
 import chalk from 'chalk'
 import cheerio from 'cheerio'
 import { exec } from 'child_process'
 import { createHash } from 'crypto'
-import { default as fs, watchFile, unwatchFile } from 'fs'
+import { default as fs, watchFile, unwatchFile, unlinkSync } from 'fs'
 import gis from 'g-i-s'
 import { sizeFormatter } from 'human-readable'
 import moment from 'moment-timezone'
@@ -45,7 +45,7 @@ const Menu = (`
 ┃ *coins :* %coin
 ┃ *Rol : %rol*
 ┠─────────────
-┃ *Tiempo activo :* [ ${timeString(process.uptime())} ]
+┃ *Tiempo activo :* [ ${timeString(process.uptime()) || ''} ]
 ┃ *Version del bot :* 1.0.5
 ┃ *Creador :* Zeppt
 ┃ *wa.me/526673877887*
@@ -227,6 +227,28 @@ export async function sendCase(conn, m, store) {
 
     const premium = (sender) => { if (sender) return; const user = data.users[sender]; return user.premium ? true : user.modr ? true : user.owner ? true : user.rowner ? true : false }
 
+    if (!conn.question) { conn.question = {} }
+
+    if (conn.question[m.sender]) {
+        const object = conn.question
+        const { User, chat, Numeros, setTimeout } = object[m.sender]
+        if (!(chat === m.chat)) return;
+        if (!(User === m.sender)) return;
+
+        if (m.body.toLowerCase().includes('no')) {
+            clearTimeout(setTimeout)
+            delete object[m.sender]
+            return m.reply('● *Acción Cancelada ✓*')
+        }
+
+        if (m.body.toLowerCase().includes('no')) {
+            await conn.groupParticipantsUpdate(m.chat, [Numeros], 'remove')
+            await conn.sendMessage(m.chat, { text: `Se eliminaron *${Numeros.length}* participantes ✓`, mentions: [m.sender] }, { ephemeralExpiration: 24 * 3600, quoted: { key: { participant: '0@s.whatsapp.net' }, message: { documentMessage: { title: `Acción ejecutada por\nUser : ${m.name}`, jpegThumbnail: null } } } })
+            clearTimeout(setTimeout)
+            delete object[m.sender]
+        }
+    }
+
     if (!conn.transferencia) { conn.transferencia = {} }
 
     if (conn.transferencia[m.sender]) {
@@ -378,6 +400,27 @@ export async function sendCase(conn, m, store) {
             }
         } break
 
+        /*case 'infogrupo': {
+             let pp = await conn.profilePictureUrl(m.chat, 'image').catch(_ => null) || './multimedia/avatar_contact.png'
+             let groupAdmins = participants.filter(p => p.admin)
+             let listAdmin = groupAdmins.map((v, i) => `${i + 1}. _@${v.id.split('@')[0]}_`).join('\n')
+             let owner = groupMetadata.owner || groupAdmins.find(p => p.admin === 'superadmin')?.id || m.chat.split`-`[0] + '@s.whatsapp.net'
+             let sumadmin = participants.filter(x => x.admin === 'admin').length + participants.filter(x => x.admin === 'superadmin').length
+             let more = String.fromCharCode(8206)
+             let masss = more.repeat(850)
+             let text = `*Nombre del grupo* : ${groupMetadata.subject}
+ *Creado por* : _${'@' + owner.split('@')[0] ? '@' + owner.split('@')[0] : "Número del creador principal no encontrado"}_
+ *Fecha de creación* : _${formatDate(groupMetadata.creation * 1000)}_
+ *Total de participantes* : _${participants.length}_
+ *Total de administradores* : _${sumadmin}_
+ ${listAdmin}
+ *ID del grupo* : _${groupMetadata.id}_
+ *Descripción* : \n${masss}\n${groupMetadata.desc?.toString()}`.trim()
+             conn.sendFile(m.chat, pp, 'pp.jpg', text, m, false, {
+                 mentions: [...groupAdmins.map(v => v.id), owner]
+             })
+             } break*/
+
         case 'grupo': {
             if (!m.isGroup) return m.sms('group')
             if (!m.isBotAdmin) return m.sms('botAdmin')
@@ -422,6 +465,27 @@ export async function sendCase(conn, m, store) {
             if (m.mentionedJid.includes(conn.user.jid)) return;
             const user = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted.sender;
             await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
+        } break
+
+        case 'kickUser': {
+            if (!m.isGroup) return m.sms('group')
+            if (!m.isBotAdmin) return m.sms('botAdmin')
+            if (!m.isAdmin) return m.sms('admin')
+            if (!m.text) return m.reply('Este comando tiene la capacidad de eliminar a varios usuarios simultáneamente. Por favor, proporciona una lista de los usuarios que deseas eliminar, asegurándote de etiquetar a cada uno de ellos')
+
+            let numeros = m.text.match(/(@\d+|\b\d+\b)/g)
+            numeros = numeros.map(numero => numero.startsWith('@') ? numero.substring(1) + '@s.whatsapp.net' : numero + '@s.whatsapp.net')
+
+            if (numeros.map(owner => owner[0] + '@s.whatsapp.net').includes(conn.user.jid)) return m.reply('El número asociado al bot no debe incluirse en la lista de usuarios a eliminar.')
+
+            conn.question[m.sender] = {
+                User: m.sender,
+                chat: m.chat,
+                Numeros: numeros,
+                setTimeout: setTimeout(() => (m.reply('Se acabó el tiempo, esta acción fue cancelada'), delete conn.question[m.sender]), 60 * 1000)
+            }
+
+            m.reply(`¿Confirma que desea eliminar a ${numeros.length} usuarios?\n\nDispone de *60* segundos para tomar una decisión. Si está de acuerdo con esta acción, responda con un ‘sí’. En caso contrario, puede cancelar esta acción respondiendo con un ‘no’.`.trim())
         } break
 
         case 'promote': case 'demote': case 'darpoder': case 'quitarpoder': case 'addadmin': case 'deladmin': {
@@ -567,7 +631,7 @@ Enviando archivo${readMore}`.trim();
                 var ktt = await fetchJson(`https://www.tikwm.com/api/?url=${m.text}?hd=1`)
                 var p = ktt.data
                 try {
-                    var musicatiktok = p.music ?  p.music : false
+                    var musicatiktok = p.music ? p.music : false
                     if (p.images) {
                         var url = p.images
                         var cptn = `*Titulo:* ${p.title}\n`
@@ -658,6 +722,12 @@ Enviando archivo${readMore}`.trim();
                     var Texto = OpenAI.result
                     await m.reply(Texto); if (database('chats', m.chat).commands.rpg) { coin(true) }
                 } catch { m.react(error) }
+            } break
+
+            case 'voz': {
+                if (!m.text) return m.reply('Y el texto?')
+                const audio = await tts(m.text);
+                await conn.sendMessage(m.chat, { audio: audio, fileName: 'error.mp3', mimetype: 'audio/mpeg', ptt: true }, { quoted: m });
             } break
 
             case 'cleancloud': case 'cloudclean': case 'delfiles': case 'delfile': case 'mycloud': case 'editfile': case 'guardar': case 'savefile': case 'save': case 'savecloud': case 'sendfile': case 'listfile': {
@@ -920,7 +990,7 @@ Enviando archivo${readMore}`.trim();
                 const { exp, coin } = database('users', m.sender)
 
                 let item = false
-                if (objeto == 'coin') {
+                if (objeto == 'coin' || objeto == 'coins') {
                     if (m.isPrems && !m.isModr) return m.reply('Como usuario premium, dispones de una cantidad ilimitada de coins. Sin embargo, debido a esto no puedes compartir ninguna de estas coins')
 
                     if (coin < Cantidad) return m.reply('No tienes sufientes coins para transferir'); item = 'coin'
@@ -1047,7 +1117,7 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
 
             const { path } = await overlayImages(['./multimedia/imagenes/logo.png', './multimedia/iconos/nodejs.png'], { tamano: [100, 100], localizacion: ['abajoIzquierda', 50] })
 
-            conn.sendMessage(m.chat, { image: fs.readFileSync(path), caption: defaultMenu(), contextInfo: { mentionedJid: [...defaultMenu().matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), externalAdReply: { title: 'Zenn Bot MD (en desarrollo)', body: 'indefinido', thumbnail: fs.readFileSync('./multimedia/imagenes/thumbnail.jpg') } }, mentions: [m.sender] }, { quoted: m }); m.react('📚')
+            conn.sendMessage(m.chat, { image: fs.readFileSync(path), caption: defaultMenu(), contextInfo: { mentionedJid: [...defaultMenu().matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), externalAdReply: { title: 'Zenn Bot MD (en desarrollo)', body: 'indefinido', thumbnail: fs.readFileSync('./multimedia/imagenes/thumbnail.jpg'), showAdAttribution: true } }, mentions: [m.sender] }, { quoted: m }); m.react('📚')
         } break
 
         case 'creador': case 'owner': {
@@ -1273,6 +1343,10 @@ async function mediafireDl(url) {
     const rese = await axios.head(link);
     mime = rese.headers['content-type'];
     return { name, size, date, mime, link };
+}
+
+async function tts(text = 'error', lang = 'es') {
+    return new Promise((resolve, reject) => { try { const tts = gtts(lang); const filePath = path.join(global.__dirname(import.meta.url), './tmp', (1 * new Date) + '.wav'); tts.save(filePath, text, () => { resolve(fs.readFileSync(filePath)); unlinkSync(filePath) }) } catch (e) { reject(e) } })
 }
 
 async function GDriveDl(url) {

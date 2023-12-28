@@ -4,6 +4,7 @@ import yargs from 'yargs'
 import lodash from 'lodash'
 import { Low, JSONFile } from 'lowdb'
 import pino from 'pino'
+import NodeCache from 'node-cache'
 import chalk from 'chalk'
 import { join } from 'path'
 import { readdirSync, unlinkSync } from 'fs'
@@ -15,7 +16,7 @@ import fs from 'fs'
 import moment from 'moment-timezone'
 import './config.js'
 
-const { default: makeWAconnet, useMultiFileAuthState, PHONENUMBER_MCC, makeInMemoryStore, DisconnectReason, fetchLatestBaileysVersion } = (await import('@whiskeysockets/baileys')).default
+const { default: makeWAconnet, useMultiFileAuthState, PHONENUMBER_MCC, makeInMemoryStore, DisconnectReason, fetchLatestBaileysVersion, proto } = (await import('@whiskeysockets/baileys')).default
 const { chain } = lodash
 
 global.opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse());
@@ -33,52 +34,70 @@ const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream
 const readLine = readline.createInterface({ input: process.stdin, output: process.stdout, prompt: '' })
 const question = (texto) => { return new Promise((resolver) => { readLine.question(texto, (respuesta) => { resolver(respuesta.trim()) }) }) }
 const isNumber = x => typeof x === 'number' && !isNaN(x)
+const msgNodeCache = new NodeCache()
 const Sesion = 'Sesion'
 
-const useMobile = process.argv.includes('--mobile')
-const useQrcode = process.argv.includes('--qrcode')
+const menu = (`╭┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅
+┊ ¿CÓMO DESEA CONECTARSE?
+┠┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅
+┊ 1. Código QR.
+┊ 2. Código de 8 digitos.
+┠┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅
+┊ introduzca 1 o 2
+┠┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅`)
+
+let connect = {}
 
 async function StartBot() {
   const { state, saveCreds } = await useMultiFileAuthState(Sesion)
   const { version } = await fetchLatestBaileysVersion()
 
-  let opcion
-  if (useQrcode) { opcion = '1' }
-  if (!useQrcode && !useMobile && !fs.existsSync(`./${Sesion}/creds.json`)) { do { opcion = await question(chalk.greenBright(`╭┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅\n┊ ¿CÓMO DESEA CONECTARSE?\n┠┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅\n┊ ⇢ 1. Código QR.\n┊ ⇢ 2. Código de 8 digitos.\n╰┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅\n\x1b[1;31m~\x1b[1;37m> `)); if (!/^[1-2]$/.test(opcion)) { console.log(`No se permite números que no sean 1 O 2`) } } while (opcion !== '1' && opcion !== '2' || fs.existsSync(`./${Sesion}/creds.json`)) }
-
-  const connection = {
-    logger: pino({ level: 'silent' }),
-    printQRInTerminal: opcion == '1' ? true : useQrcode ? true : false,
-    mobile: useMobile,
-    browser: opcion == '1' ? ['ZennBot-MD', 'Edge', '2.0.0'] : useQrcode ? ['ZennBot-MD', 'Edge', '2.0.0'] : ['Chrome (Linux)', '', ''],
-    auth: state,
-    generateHighQualityLinkPreview: true,
-    version
-  }
-
-  const conn = makeWAconnet(connection)
-
   if (!fs.existsSync(`./${Sesion}/creds.json`)) {
-    if (opcion === '2' || useMobile) {
-      if (!conn.authState.creds.registered) {
-        let phoneNumber
-
-        while (true) {
-          phoneNumber = await question(chalk.greenBright(`Escriba el número de WhatsApp que será Bot, escribalo hasta 2 veces si no funciona.\nEjemplo: +529999999999\n\x1b[1;31m~\x1b[1;37m> `))
-          phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
-          if (phoneNumber.match(/^\d+$/) && Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) { break } else { console.log('Asegúrese de agregar el codigo de país') }
-        }
-
-        setTimeout(async () => {
-          let phoneVinculo = await conn.requestPairingCode(phoneNumber)
-          phoneVinculo = phoneVinculo?.match(/.{1,4}/g)?.join("-") || phoneVinculo
-          console.log(chalk.greenBright(`Pairing code: ${phoneVinculo}`))
-        }, 2000)
+    if (!connect.opcion) { connect.opcion = false }
+    console.log(chalk.greenBright(menu))
+    while (!connect.opcion) {
+      const m = await question(chalk.white('┠') + chalk.red('┅') + chalk.white('> '))
+      const comando = m.trim().split(/ +/).shift().toLowerCase()
+      switch (comando) {
+        case '1': { connect.opcion = '1' } break
+        case '2': { connect.opcion = '2' } break
+        default: { console.log(`${chalk.white('╰') + chalk.red('┅') + chalk.white('[ ') + chalk.greenBright('Por favor, introduce solo el número 1 o 2.') + chalk.white(' ]')}\n`) + console.log(chalk.greenBright(menu)) }
       }
     }
   }
 
-  store.bind(conn.ev)
+  const connection = {
+    version,
+    logger: pino({ level: 'silent' }),
+    printQRInTerminal: connect.opcion == '1' ? true : false,
+    mobile: false,
+    browser: connect.opcion == '1' ? ['ZennBot-MD', 'Edge', '2.0.0'] : ['Chrome (Linux)', '', ''],
+    auth: state,
+    msgNodeCache,
+    generateHighQualityLinkPreview: true,
+    getMessage: async (key) => { if (store) { const msg = await store.loadMessage(key.remoteJid, key.id); return msg?.message || undefined } return proto.Message.fromObject({}) }
+  }
+
+  const conn = makeWAconnet(connection)
+  store?.bind(conn.ev)
+
+  if (!fs.existsSync(`./${Sesion}/creds.json`)) {
+    if (!connect.opcion === '2') return
+    if (conn.authState.creds.registered) return
+    if (!connect.Number) { connect.Number = false }
+
+    while (!connect.Number) {
+      const Number = await question(`${chalk.white('┠') + chalk.red('┅') + chalk.white('[ ') + chalk.greenBright('Escriba el número de WhatsApp que será Bot') + chalk.white(' ]') + '\n'}${chalk.white('┠') + chalk.red('┅') + chalk.white('>')} `)
+      const numero = Number.replace(/[^0-9]/g, '')
+      if (numero.match(/^\d+$/) && Object.keys(PHONENUMBER_MCC).some(v => numero.startsWith(v))) { connect.Number = numero; break } else { console.log('Error') }
+    }
+
+    setTimeout(async () => {
+      let phoneVinculo = await conn.requestPairingCode(connect.Number)
+      const code = phoneVinculo?.match(/.{1,4}/g)?.join("-") || phoneVinculo
+      console.log(`${chalk.white('╰') + chalk.red('┅') + chalk.white('[ ') + chalk.greenBright('CODIGO : ' + code) + chalk.white(' ]')}\n`)
+    }, 2000)
+  }
 
   conn.ev.on('connection.update', async (update) => {
     console.log(update); const { connection, lastDisconnect } = update
@@ -88,7 +107,7 @@ async function StartBot() {
 
   conn.ev.on('creds.update', saveCreds);
 
-  setInterval(async () => { await conn.sendMessage(global.owner.find(o => o[2])?.[0] + '@s.whatsapp.net', { document: fs.readFileSync('./database.json'), caption: '● *fecha :* ' + moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss'), mimetype: 'document/json', fileName: 'database.json' }) }, 4 * 60 * 60 * 1000)
+  setInterval(async () => { await conn.sendMessage(global.owner.find(o => o[2])?.[0] + '@s.whatsapp.net', { document: fs.readFileSync('./database.json'), caption: '● *fecha :* ' + moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss'), mimetype: 'document/json', fileName: 'database.json' }) }, 2 * 60 * 60 * 1000)
 
   conn.ev.on('messages.upsert', async (m) => {
     if (!m.type === 'notify') return;
@@ -96,6 +115,7 @@ async function StartBot() {
     //console.log(JSON.stringify(m, undefined, 2))
     m.mek = m
     m.prefix = global.prefix
+    m = m.messages[0]
     m = await smsg(conn, m, store)
     if (!m.message) return;
 
@@ -262,25 +282,23 @@ async function StartBot() {
     let chat = global.db.data.chats[id] || {}
     let text = ''
     switch (action) {
-      case 'add':
-      case 'remove':
-        if (chat.welcome) {
-          const groupMetadata = conn.groupMetadata(id)
-          for (let user of participants) {
-            const pp = './multimedia/imagenes/avatar.jpg'
-            let UserImagen = await getBuffer(await conn.profilePictureUrl(user, 'image').catch(fs.readFileSync(pp)))
-            let fesha = moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss')
-            const welcome = '● *Bienvenid@ :* @user\n● *Normas del grupo*\n' + String.fromCharCode(8206).repeat(850) + '\n@desc'
-            const bye = '[ ! ] C fue alv : @user'
+      case 'add': case 'remove': {
+        if (!chat.welcome) return;
+        const groupMetadata = conn.groupMetadata(id)
+        for (let user of participants) {
+          const pp = './multimedia/imagenes/avatar.jpg'
+          let UserImagen = await getBuffer(await conn.profilePictureUrl(user, 'image').catch(pp))
+          let fesha = moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss')
+          const welcome = '● *Bienvenid@ :* @user\n● *Normas del grupo*\n' + String.fromCharCode(8206).repeat(850) + '\n@desc'
+          const bye = '[ ! ] C fue alv : @user'
 
-            text = action === 'add' ? welcome.replace('@user', '@' + user.split('@')[0]).replace('@desc', groupMetadata.desc || 'indefinido') : bye.replace('@user', '@' + user.split('@')[0])
+          text = action === 'add' ? welcome.replace('@user', '@' + user.split('@')[0]).replace('@desc', groupMetadata.desc || 'indefinido') : bye.replace('@user', '@' + user.split('@')[0])
 
-            const reply = { text: text, mentions: [user], contextInfo: { externalAdReply: { title: action === 'add' ? 'Fecha de ingreso | ' + fesha : 'Fecha de salida | ' + fesha, body: 'El bot mas chidori tercer mundista', thumbnail: UserImagen, mediaType: 1, renderLargerThumbnail: true } } }
+          const reply = { text: text, mentions: [user], contextInfo: { externalAdReply: { title: action === 'add' ? 'Fecha de ingreso | ' + fesha : 'Fecha de salida | ' + fesha, body: 'El bot mas chidori tercer mundista', thumbnail: UserImagen, mediaType: 1, renderLargerThumbnail: true } } }
 
-            conn.sendMessage(id, reply, { quoted: { key: { participant: "0@s.whatsapp.net", "remoteJid": "0@s.whatsapp.net" }, "message": { "groupInviteMessage": { "groupJid": "573245088667-1616169743@g.us", "inviteCode": "m", "groupName": "P", "caption": action === 'add' ? 'Nuevo participante bienvenido!' : 'Menos un participante', 'jpegThumbnail': UserImagen } } } })
-          }
+          conn.sendMessage(id, reply, { quoted: { key: { participant: "0@s.whatsapp.net", "remoteJid": "0@s.whatsapp.net" }, "message": { "groupInviteMessage": { "groupJid": "573245088667-1616169743@g.us", "inviteCode": "m", "groupName": "P", "caption": action === 'add' ? 'Nuevo participante bienvenido!' : 'Menos un participante', 'jpegThumbnail': UserImagen } } } })
         }
-        break
+      } break
       case 'promote': text = '@user Ahora es admin!'
       case 'demote': if (!text) text = '@user Ya no es admin'; text = text.replace('@user', '@' + participants[0].split('@')[0]); if (chat.detect) conn.sendMessage(id, { text: text, mentions: [participants] })
         break
