@@ -242,7 +242,8 @@ export async function sendCase(conn, m, store) {
         }
 
         if (m.body.toLowerCase().includes('no')) {
-            await conn.groupParticipantsUpdate(m.chat, [Numeros], 'remove')
+            console.log(JSON.stringify(Numeros, undefined, 2))
+            for (let i = 0; i < Numeros.length; i++) { await conn.groupParticipantsUpdate(chat, [Numeros[i]], 'remove') }
             await conn.sendMessage(m.chat, { text: `Se eliminaron *${Numeros.length}* participantes ✓`, mentions: [m.sender] }, { ephemeralExpiration: 24 * 3600, quoted: { key: { participant: '0@s.whatsapp.net' }, message: { documentMessage: { title: `Acción ejecutada por\nUser : ${m.name}`, jpegThumbnail: null } } } })
             clearTimeout(setTimeout)
             delete object[m.sender]
@@ -467,7 +468,7 @@ export async function sendCase(conn, m, store) {
             await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
         } break
 
-        case 'kickUser': {
+        case 'kickuser': {
             if (!m.isGroup) return m.sms('group')
             if (!m.isBotAdmin) return m.sms('botAdmin')
             if (!m.isAdmin) return m.sms('admin')
