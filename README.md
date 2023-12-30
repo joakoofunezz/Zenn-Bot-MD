@@ -1,5 +1,16 @@
 <div align="center"><h1> Zenn-Bot-MD </h1>
-   <h2> Un bot de WhatsApp simple </h2>
+   Un bot de WhatsApp simple
+   ## Características del bot 
+|  Contenido  |                                           Sip |
+| :---------------------------------------------: | :-----------: |
+| Crea stickers|✔️|
+| Bienvenida automática|✔️|
+| Anti-Link|✔️|
+| Anti-Trabas|✔️|
+| Imagenes-Random|✔️|
+| Juegos|✔️|
+| Modo Publico/Privado|✔️|
+| Descarga de música/videos|✔️|
 </div>
 
 ## Instalación en Termux
