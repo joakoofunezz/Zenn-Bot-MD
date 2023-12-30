@@ -17,7 +17,8 @@
 
 **Configura el bot**
 
-   Antes de iniciar el bot, es importante que configures el número del propietario (owner). Para hacerlo, abre el archivo `config.js` y ajusta las configuraciones según tus necesidades, incluyendo el número del propietario. Asegúrate de guardar los cambios antes de continuar.
+   Antes de iniciar el bot, es importante que configures el número del propietario (owner). Para hacerlo, abre el archivo [config.js](docs/configuracion.md)
+ y ajusta las configuraciones según tus necesidades, incluyendo el número del propietario. Asegúrate de guardar los cambios antes de continuar.
 
 
 ## Instalación en Termux
