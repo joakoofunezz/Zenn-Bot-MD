@@ -4,8 +4,9 @@
    remplace el numero existente por tu numero o que quieres que sea owner del Bot
    ```bash
    global.owner = [
-    ['5216673877887', 'Zeppth', true]
+    ['Tu numero', 'Tu nombre', true]
    ]
    
+   //
    global.mods = ['5216673877887']
    global.prems = ['5216673877887']
