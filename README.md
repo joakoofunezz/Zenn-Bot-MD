@@ -11,3 +11,9 @@ Sigue estos pasos para instalar Zenn-Bot-MD en Termux:
    ```bash
    apt install nodejs
    apt install git
+   
+1. **Actualiza Termux**
+
+   Actualiza Termux con los siguientes comandos:
+    ```bash
+   apt update && apt upgrade
