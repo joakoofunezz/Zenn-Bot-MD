@@ -1,25 +1,10 @@
-<div align="center"><h1> Zenn-Bot-MD </h1>
-   Un bot de WhatsApp simple
-   
-   ## Características del bot
-   
-|  Contenido  |                                           Sip |
-| :---------------------------------------------: | :-----------: |
-| Crea stickers|✔️|
-| Bienvenida automática|✔️|
-| Anti-Link|✔️|
-| Anti-Trabas|✔️|
-| Imagenes-Random|✔️|
-| Juegos|✔️|
-| Modo Publico/Privado|✔️|
-| Descarga de música/videos|✔️|
-</div>
+## Zenn-Bot-MD
+
+Un bot de WhatsApp simple
 
 **Configura el bot**
 
-   Antes de iniciar el bot, es importante que configures el número del propietario (owner). Para hacerlo, abre el archivo [config.js](configuracion.md)
- y ajusta las configuraciones según tus necesidades, incluyendo el número del propietario. Asegúrate de guardar los cambios antes de continuar.
-
+Antes de iniciar el bot, es importante que configures el número del propietario (owner). Para hacerlo, abre el archivo [config.js](configuracion.md) y ajusta las configuraciones según tus necesidades, incluyendo el número del propietario. Asegúrate de guardar los cambios antes de continuar.
 
 ## Instalación en Termux
 
