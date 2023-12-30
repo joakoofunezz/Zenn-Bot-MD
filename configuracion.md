@@ -67,5 +67,5 @@ Sigue estos pasos para configurar correctamente tu bot:
         role: 'Novato'
     }
    }
-   
+   ```
 
