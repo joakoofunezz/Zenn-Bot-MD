@@ -18,10 +18,15 @@ Sigue estos pasos para configurar correctamente tu bot:
    ['5216673877887', 'Zeppth', true]
    ]
    ```
+   Tambien puedes editar este parametro :
+   ```bash
+   global.mods = ['5216673877887']
+   global.prems = ['5216673877887']
+   ```
 
    Recuerda poner el prefijo del país, pero no coloques ningún “+”.
 
-2. **Agregar más números de propietarios**
+3. **Agregar más números de propietarios**
 
    Si deseas agregar más de un número de propietario, simplemente debes agregar el número en un array, como se muestra a continuación:
    ```bash
