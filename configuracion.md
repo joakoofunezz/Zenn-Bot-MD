@@ -29,7 +29,7 @@ Sigue estos pasos para configurar correctamente tu bot:
 
    Recuerda poner el prefijo del país, pero no coloques ningún “+”.
 
-3. **Agregar más números de propietarios**
+2. **Agregar más números de propietarios**
 
    Si deseas agregar más de un número de propietario, simplemente debes agregar el número en un array, como se muestra a continuación:
    ```bash
@@ -42,4 +42,11 @@ Sigue estos pasos para configurar correctamente tu bot:
    // ...
    ]
    ```
+   
+3. **Edita el prefijo del bot**
+
+   El prefijo es el carácter o los caracteres que el bot busca al inicio de un mensaje para saber que es un comando. Si deseas cambiar el prefijo que el bot usa para responder a los comandos, puedes hacerlo editando la siguiente línea :
+
+   ```bash
+   global.prefix = 'Tu prefijo aquí' // '/' '*' '!' '#' '.'
 
