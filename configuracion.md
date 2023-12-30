@@ -48,7 +48,10 @@ Sigue estos pasos para configurar correctamente tu bot:
    El prefijo es el carácter o los caracteres que el bot busca al inicio de un mensaje para saber que es un comando. Si deseas cambiar el prefijo que el bot usa para responder a los comandos, puedes hacerlo editando la siguiente línea :
 
    ```bash
-   global.prefix = 'Tu prefijo aquí' // '/' '*' '!' '#' '.'
+   global.prefix = 'Tu prefijo aquí'
+   //'/' '*' '!' '#' '.'
+
+   global.prefix = '.'
     ```
    
 4. **Edita la experiencia y las monedas del bot**
