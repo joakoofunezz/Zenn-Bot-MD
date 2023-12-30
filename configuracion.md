@@ -1,7 +1,5 @@
 ## Configuración del archivo `config.js`
 
-Sigue estos pasos para configurar correctamente tu bot:
-
 1. **Número del propietario**
 
    Reemplaza el número existente por el número que deseas que sea el propietario del bot. Asegúrate de incluir también tu nombre. Aquí tienes un ejemplo de cómo hacerlo:
