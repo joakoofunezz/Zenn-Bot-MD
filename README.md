@@ -1,5 +1,5 @@
-# Zenn-Bot-MD
-Un bot de WhatsApp simple
+<div align="center"><h1> Zenn-Bot-MD </h1>
+<div align="center"><h2> Un bot de WhatsApp simple </h2>
 
 ## Instalación en Termux
 
