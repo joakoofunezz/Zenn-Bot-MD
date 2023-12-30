@@ -21,16 +21,17 @@ Sigue estos pasos para configurar correctamente tu bot:
 
    Recuerda poner el prefijo del país, pero no coloques ningún “+”.
 
-2. **Puedes poner mas de un numero owner**
+2. **Agregar más números de propietarios**
 
    Si deseas agregar más de un número de propietario, simplemente debes agregar el número en un array, como se muestra a continuación:
    ```bash
    global.owner = [
     ['Tu número', 'Tu nombre', true],
-    ['numero que quieres que sea owner']
-   //Ejemplo :
-    ['52178787889998'],
+   // Agrega más números de propietarios aquí
     ['52199999999999'],
-    ['5189888888888']
+    ['Número 2'],
+    ['Número 3'],
+   // ...
    ]
    ```
+
