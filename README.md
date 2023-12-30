@@ -2,7 +2,6 @@
 Simple Bot de WhatsApp
 
 ##Instalar en Termux
-`
 ```
 apt install nodejs
 apt install git
@@ -13,4 +12,3 @@ npm install
 npm start
 
 ```
-`
