@@ -55,6 +55,6 @@ Sigue estos pasos para instalar Zenn-Bot-MD en Termux:
    
 ¡Y eso es todo! Ahora deberías tener Zenn-Bot-MD funcionando en tu sistema.
 
-- Nota: Este código es de uso libre para todos. No es necesario atribuir crédito. ¡Siéntete libre de usarlo y modificarlo según tus necesidades!
+- **Nota:** Este código es de uso libre para todos. No es necesario atribuir crédito. ¡Siéntete libre de usarlo y modificarlo según tus necesidades!
 
 - [![WhatsApp Group](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/526673877887)
