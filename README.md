@@ -52,11 +52,9 @@ Sigue estos pasos para instalar Zenn-Bot-MD en Termux:
    ```bash
    npm start
    ```
-
+   
+¡Y eso es todo! Ahora deberías tener Zenn-Bot-MD funcionando en tu sistema.
 
 - Nota: Este código es de uso libre para todos. No es necesario atribuir crédito ni cumplir con otras obligaciones similares. ¡Siéntete libre de usarlo y modificarlo según tus necesidades!
 
-
-¡Y eso es todo! Ahora deberías tener Zenn-Bot-MD funcionando en tu sistema.
-
-# [![WhatsApp Group](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/526673877887)
+- [![WhatsApp Group](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/526673877887)
