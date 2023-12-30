@@ -54,12 +54,7 @@ Sigue estos pasos para instalar Zenn-Bot-MD en Termux:
    npm start
    ```
    
-¡Y eso es todo! Ahora deberías tener Zenn-Bot-MD funcionando en tu sistema.
-
-
-
-
-
+**¡Y eso es todo! Ahora deberías tener Zenn-Bot-MD funcionando en tu sistema.**
 
 - **Nota:** Este código es de uso libre para todos. No es necesario atribuir crédito. ¡Siéntete libre de usarlo y modificarlo según tus necesidades!
 
