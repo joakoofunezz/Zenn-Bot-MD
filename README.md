@@ -1,14 +1,13 @@
 # Zenn-Bot-MD
-Simple Bot de WhatsApp
+Un bot de WhatsApp simple
 
-##Instalar en Termux
-```
-apt install nodejs
-apt install git
-apt update && apt upgrade
-git clone https://github.com/Zeppt/Zenn-Bot-MD
-cd Zenn-Bot-MD
-npm install
-npm start
+## Instalación en Termux
 
-```
+Sigue estos pasos para instalar Zenn-Bot-MD en Termux:
+
+1. **Instala Node.js y Git**
+
+   Ejecuta los siguientes comandos para instalar Node.js y Git:
+   ```bash
+   apt install nodejs
+   apt install git
