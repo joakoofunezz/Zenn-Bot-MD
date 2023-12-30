@@ -35,3 +35,9 @@ Sigue estos pasos para instalar Zenn-Bot-MD en Termux:
    Instala todas las dependencias necesarias con este comando:
    ```bash
    npm install
+
+6. **Inicia el bot**
+
+   Finalmente, inicia el bot con este comando:
+   ```bash
+   npm start
