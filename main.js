@@ -58,11 +58,7 @@ async function StartBot() {
     while (!connect.opcion) {
       const m = await question(chalk.white('┠') + chalk.red('┅') + chalk.white('> '))
       const comando = m.trim().split(/ +/).shift().toLowerCase()
-      switch (comando) {
-        case '1': { connect.opcion = '1' } break
-        case '2': { connect.opcion = '2' } break
-        default: { console.log(`${chalk.white('╰') + chalk.red('┅') + chalk.white('[ ') + chalk.greenBright('Por favor, introduce solo el número 1 o 2.') + chalk.white(' ]')}\n`) + console.log(chalk.greenBright(menu)) }
-      }
+      switch (comando) { case '1': { connect.opcion = '1' } break; case '2': { connect.opcion = '2' } break; default: { console.log(`${chalk.white('╰') + chalk.red('┅') + chalk.white('[ ') + chalk.greenBright('Por favor, introduce solo el número 1 o 2.') + chalk.white(' ]')}\n`) + console.log(chalk.greenBright(menu)) } }
     }
   }
 
@@ -78,7 +74,7 @@ async function StartBot() {
     getMessage: async (key) => { if (store) { const msg = await store.loadMessage(key.remoteJid, key.id); return msg?.message || undefined } return proto.Message.fromObject({}) }
   }
 
-  const conn = makeWAconnet(connection)
+  const conn = await makeWAconnet(connection)
   store?.bind(conn.ev)
 
   if (!fs.existsSync(`./${Sesion}/creds.json`)) {
@@ -200,7 +196,8 @@ async function StartBot() {
       } else global.db.data.settings[m.Bot] = {
         objecto: {},
         autoread: false,
-        restrict: true
+        restrict: true,
+        antiPrivado: false
       }
 
       let cloud = global.db.data.cloud[m.sender]
@@ -227,6 +224,9 @@ async function StartBot() {
     m.text = m.args.join(" ")
 
     console.log('\x1b[1;31m~\x1b[1;37m>', chalk.white('['), chalk.blue(m.isCmd ? 'EJECUTANDO' : 'MENSAJE'), chalk.white(']'), chalk.green('{'), chalk.rgb(255, 131, 0).underline(m.budy), chalk.green('}'), chalk.blue(m.isCmd ? 'Por' : 'De'), chalk.cyan(m.name), 'Chat', m.isGroup ? chalk.bgGreen('grupo:' + m.groupName || m.chat) : chalk.bgRed('Privado:' + m.name || m.sender), 'Fecha', chalk.magenta(moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss')).trim())
+
+
+    if (global.db.data.chats[m.chat].antiPrivado) { if (!m.isGroup) { if (!(m.isPrems ?? m.isModr ?? m.isOwner ?? m.isROwner)) { m.reply('El chat privado esta prohibido'); return } } }
 
     if (global.db.data.chats[m.chat].antiTraba) {
       if (m.isAdmin) return;
@@ -257,7 +257,7 @@ async function StartBot() {
       }
     }
 
-    await sendCase(conn, m, store).catch(e => { m.reply(e); console.log('Error: ' + e) })
+    await sendCase(conn, m, store)//.catch(e => { m.reply(e); console.log('Error: ' + e) })
   })
 
   conn.ev.on("groups.update", async (json) => {
