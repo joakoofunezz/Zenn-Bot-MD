@@ -49,4 +49,20 @@ Sigue estos pasos para configurar correctamente tu bot:
 
    ```bash
    global.prefix = 'Tu prefijo aquí' // '/' '*' '!' '#' '.'
+    ```
+   
+4. **Edita la experiencia y las monedas del bot**
+
+   Cuando se inicia el bot, se asigna una cantidad predeterminada de experiencia y monedas a cada usuario en su balance. Si deseas cambiar estos valores, puedes hacerlo editando las siguientes líneas :
+
+   ```bash
+   global.rpg = {
+    data: {
+        exp: 0,
+        coin: 10,
+        nivel: 0,
+        role: 'Novato'
+    }
+   }
+   
 
