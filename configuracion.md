@@ -20,7 +20,10 @@ Sigue estos pasos para configurar correctamente tu bot:
    ```
    Tambien puedes editar este parametro :
    ```bash
+   //moderadores :
    global.mods = ['5216673877887']
+
+   // premiums :
    global.prems = ['5216673877887']
    ```
 
