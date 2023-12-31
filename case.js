@@ -471,32 +471,38 @@ export async function sendCase(conn, m, store) {
             if (!m.isGroup) return m.sms('group')
             if (!m.isBotAdmin) return m.sms('botAdmin')
             if (!m.isAdmin) return m.sms('admin')
+            if (!(m.mentionedJid[0] || m.quoted || m.text)) return m.reply(`A quien quiere eliminar?`);
+            //if (!m.text) return m.reply('Este comando tiene la capacidad de eliminar a varios usuarios simultáneamente. Por favor, proporciona una lista de los usuarios que deseas eliminar, asegurándote de etiquetar a cada uno de ellos')
+
+            if (m.args[0] && m.args[1]) {
+                const numerosEncontrados = m.text.match(/\d+/g)
+                let numeros = numerosEncontrados.map(numeros => numeros.join('') + '@s.whatsapp.net')
+                if (numeros.map(Bot => Bot).includes(conn.user.jid)) return m.reply('El número asociado al bot no debe incluirse en la lista de usuarios a eliminar.')
+
+                conn.question[m.sender] = {
+                    User: m.sender,
+                    chat: m.chat,
+                    Numeros: numeros,
+                    setTimeout: setTimeout(() => (m.reply('Se acabó el tiempo, esta acción fue cancelada'), delete conn.question[m.sender]), 60 * 1000)
+                }
+
+                m.reply(`¿Confirma que desea eliminar a ${numeros.length} usuarios?\n\nDispone de *60* segundos para tomar una decisión. Si está de acuerdo con esta acción, responda con un ‘sí’. En caso contrario, puede cancelar esta acción respondiendo con un ‘no’.`.trim())
+            } else {
+                const user = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted.sender
+                if (user.includes(m.Bot) && !m.isOwner) return m.reply('No puedes eliminar al Bot con este comando')
+                await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
+            }
+        } break
+
+        /*case 'ban': case 'kick': {
+            if (!m.isGroup) return m.sms('group')
+            if (!m.isBotAdmin) return m.sms('botAdmin')
+            if (!m.isAdmin) return m.sms('admin')
             if (!(m.mentionedJid[0] || m.quoted)) return m.reply(`A quien quiere eliminar?`);
             if (m.mentionedJid.includes(conn.user.jid)) return;
             const user = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted.sender;
             await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
-        } break
-
-        case 'kickuser': {
-            if (!m.isGroup) return m.sms('group')
-            if (!m.isBotAdmin) return m.sms('botAdmin')
-            if (!m.isAdmin) return m.sms('admin')
-            if (!m.text) return m.reply('Este comando tiene la capacidad de eliminar a varios usuarios simultáneamente. Por favor, proporciona una lista de los usuarios que deseas eliminar, asegurándote de etiquetar a cada uno de ellos')
-
-            let numeros = m.text.replace(/\s|\-|\(|\)|\+|\@/g, '')
-            numeros = numeros.map(numero => numero + '@s.whatsapp.net')
-
-            if (numeros.map(owner => owner[0] + '@s.whatsapp.net').includes(conn.user.jid)) return m.reply('El número asociado al bot no debe incluirse en la lista de usuarios a eliminar.')
-
-            conn.question[m.sender] = {
-                User: m.sender,
-                chat: m.chat,
-                Numeros: numeros,
-                setTimeout: setTimeout(() => (m.reply('Se acabó el tiempo, esta acción fue cancelada'), delete conn.question[m.sender]), 60 * 1000)
-            }
-
-            m.reply(`¿Confirma que desea eliminar a ${numeros.length} usuarios?\n\nDispone de *60* segundos para tomar una decisión. Si está de acuerdo con esta acción, responda con un ‘sí’. En caso contrario, puede cancelar esta acción respondiendo con un ‘no’.`.trim())
-        } break
+        } break*/
 
         case 'promote': case 'demote': case 'darpoder': case 'quitarpoder': case 'addadmin': case 'deladmin': {
             if (!m.isGroup) return m.sms('group')
