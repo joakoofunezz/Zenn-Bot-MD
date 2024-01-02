@@ -106,6 +106,7 @@ async function StartBot() {
   setInterval(async () => { await conn.sendMessage(global.owner.find(o => o[2])?.[0] + '@s.whatsapp.net', { document: fs.readFileSync('./database.json'), caption: '● *fecha :* ' + moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss'), mimetype: 'document/json', fileName: 'database.json' }) }, 2 * 60 * 60 * 1000)
 
   conn.ev.on('messages.upsert', async (m) => {
+    if (global.db.data == null) await global.loadDatabase()
     if (!m.type === 'notify') return;
     if (!m) return
     //console.log(JSON.stringify(m, undefined, 2))
@@ -286,17 +287,16 @@ async function StartBot() {
         if (!chat.welcome) return;
         const groupMetadata = conn.groupMetadata(id)
         for (let user of participants) {
-          const pp = './multimedia/imagenes/avatar.jpg'
-          let UserImagen = await getBuffer(await conn.profilePictureUrl(user, 'image').catch(pp))
+          let { data } = await conn.getFile(await conn.profilePictureUrl(m.chat, 'image').catch(_ => './multimedia/imagenes/avatar.jpg'))
           let fesha = moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss')
           const welcome = '● *Bienvenid@ :* @user\n● *Normas del grupo*\n' + String.fromCharCode(8206).repeat(850) + '\n@desc'
           const bye = '[ ! ] C fue alv : @user'
 
           text = action === 'add' ? welcome.replace('@user', '@' + user.split('@')[0]).replace('@desc', groupMetadata.desc || 'indefinido') : bye.replace('@user', '@' + user.split('@')[0])
 
-          const reply = { text: text, mentions: [user], contextInfo: { externalAdReply: { title: action === 'add' ? 'Fecha de ingreso | ' + fesha : 'Fecha de salida | ' + fesha, body: 'El bot mas chidori tercer mundista', thumbnail: UserImagen, mediaType: 1, renderLargerThumbnail: true } } }
+          const reply = { text: text, mentions: [user], contextInfo: { externalAdReply: { title: action === 'add' ? 'Fecha de ingreso | ' + fesha : 'Fecha de salida | ' + fesha, body: 'El bot mas chidori tercer mundista', thumbnail: data, mediaType: 1, renderLargerThumbnail: true } } }
 
-          conn.sendMessage(id, reply, { quoted: { key: { participant: "0@s.whatsapp.net", "remoteJid": "0@s.whatsapp.net" }, "message": { "groupInviteMessage": { "groupJid": "573245088667-1616169743@g.us", "inviteCode": "m", "groupName": "P", "caption": action === 'add' ? 'Nuevo participante bienvenido!' : 'Menos un participante', 'jpegThumbnail': UserImagen } } } })
+          conn.sendMessage(id, reply, { quoted: { key: { participant: "0@s.whatsapp.net", "remoteJid": "0@s.whatsapp.net" }, "message": { "groupInviteMessage": { "groupJid": "573245088667-1616169743@g.us", "inviteCode": "m", "groupName": "P", "caption": action === 'add' ? 'Nuevo participante bienvenido!' : 'Menos un participante', 'jpegThumbnail': data } } } })
         }
       } break
       case 'promote': text = '@user Ahora es admin!'

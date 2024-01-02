@@ -3,7 +3,7 @@ import { platform } from 'process'
 import path from 'path'
 
 global.owner = [
-    ['5216673877887', 'Zeppt', true]
+    ['5216673877887', 'Zeppth', true]
 ]
 
 global.mods = ['5216673877887']
@@ -21,15 +21,16 @@ global.rpg = {
     cantidad: {
         mineria: 1500, //XP
         tiempoMinera: 2 * 60 * 60 * 1000, //2 horas
+
         robar: 1000, //XP
         tiempoRobar: 2 * 60 * 60 * 1000, //2 horas
+
         claimFree: 3000, //XP
         claimPrem: 5000, //XP
         TiempoClaim: 24 * 60 * 60 * 1000 //24 horas
     },
     precios: {
         coin: 100,
-        nivel: 500
     },
     role: [
         { name: 'Novato', nivel: 1 },

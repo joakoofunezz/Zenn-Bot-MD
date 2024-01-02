@@ -23,6 +23,7 @@ import yts from 'yt-search'
 import './config.js'
 import { generateProfilePicture, overlayImages } from './lib/overlayImages.js'
 import ytdl from './lib/ytdl2.js'
+import { getBuffer } from './lib/simple.js';
 import { YoutTube, dlmp3, dlmp4, fetchBuffer, getVideoID, ytIdRegex } from './lib/ytdlmp.js'
 
 const formatSize = sizeFormatter({ std: 'JEDEC', decimalPlaces: 2, keepTrailingZeroes: false, render: (literal, symbol) => `${literal} ${symbol}B` })
@@ -65,6 +66,7 @@ let MenuRandom = `╔I *「 RANDOM 」*
 
 let MenuGrupos = `╔I *「 GRUPOS 」*
 ║╭—————————
+║├ %prefix infogrupo
 ║├ %prefix reenviar *reponder a un mensaje*
 ║├ %prefix profilegrupo (en desarrollo)
 ║├ %prefix estado
@@ -218,7 +220,7 @@ export async function sendCase(conn, m, store) {
 
     const database = (object, m) => global.db.data[object][m]
     const items = (UserXp, xpNecesario) => { let _false = false; if (UserXp < xpNecesario) _false = false; else _false = true; return _false }
-    const premium = (sender) => { if (sender) return; const user = data.users[sender]; return user.premium ? true : user.modr ? true : user.owner ? true : user.rowner ? true : false }
+    const premium = (sender) => { if (!sender) return; const user = data.users[sender]; return user.premium ? true : user.modr ? true : user.owner ? true : user.rowner ? true : false }
 
     function quesCoin() {
         let object = false
@@ -234,6 +236,7 @@ export async function sendCase(conn, m, store) {
         return usuario.coin = premium(m.sender) ? usuario.coin - 0 : usuario.coin - (coin == true ? 1 : coin)
     }
 
+    if (!database('users', m.sender).name === m.name) { if (!database('users', m.sender).registered) database('users', m.sender).name = m.name }
 
     if (!conn.question) { conn.question = {} }
     if (!conn.transferencia) { conn.transferencia = {} }
@@ -410,26 +413,26 @@ export async function sendCase(conn, m, store) {
             }
         } break
 
-        /*case 'infogrupo': {
-             let pp = await conn.profilePictureUrl(m.chat, 'image').catch(_ => null) || './multimedia/avatar_contact.png'
-             let groupAdmins = participants.filter(p => p.admin)
-             let listAdmin = groupAdmins.map((v, i) => `${i + 1}. _@${v.id.split('@')[0]}_`).join('\n')
-             let owner = groupMetadata.owner || groupAdmins.find(p => p.admin === 'superadmin')?.id || m.chat.split`-`[0] + '@s.whatsapp.net'
-             let sumadmin = participants.filter(x => x.admin === 'admin').length + participants.filter(x => x.admin === 'superadmin').length
-             let more = String.fromCharCode(8206)
-             let masss = more.repeat(850)
-             let text = `*Nombre del grupo* : ${groupMetadata.subject}
-    *Creado por* : _${'@' + owner.split('@')[0] ? '@' + owner.split('@')[0] : "Número del creador principal no encontrado"}_
-    *Fecha de creación* : _${formatDate(groupMetadata.creation * 1000)}_
-    *Total de participantes* : _${participants.length}_
-    *Total de administradores* : _${sumadmin}_
-    ${listAdmin}
-    *ID del grupo* : _${groupMetadata.id}_
-    *Descripción* : \n${masss}\n${groupMetadata.desc?.toString()}`.trim()
-             conn.sendFile(m.chat, pp, 'pp.jpg', text, m, false, {
-                 mentions: [...groupAdmins.map(v => v.id), owner]
-             })
-             } break*/
+        case 'infogrupo': {
+            if (!m.isGroup) return m.sms('group')
+            let data = await conn.profilePictureUrl(m.chat, 'image').catch(_ => './multimedia/imagenes/avatar.jpg')
+            let groupAdmins = m.participants.filter(p => p.admin)
+            let listAdmin = groupAdmins.map((v, i) => `${i + 1}. @${v.id.split('@')[0]}`).join('\n')
+            let owner = m.groupMetadata.owner || groupAdmins.find(p => p.admin === 'superadmin')?.id || m.chat.split`-`[0] + '@s.whatsapp.net'
+            let sumadmin = m.participants.filter(x => x.admin === 'admin').length + m.participants.filter(x => x.admin === 'superadmin').length
+
+            let text = `● *Nombre del grupo* : ${m.groupMetadata.subject}
+▢ *Creado por* : _${'@' + owner.split('@')[0] ? '@' + owner.split('@')[0] : "Número del creador principal no encontrado"}_
+▢ *Fecha de creación* : ${formatDate(m.groupMetadata.creation * 1000)}
+▢ *Total de participantes* : ${m.participants.length}
+▢ *Total de administradores* : ${sumadmin}
+${listAdmin}
+
+▢ *ID del grupo* : ${m.groupMetadata.id}
+▢ *Descripción* : \n${readMore}\n${m.groupMetadata.desc?.toString()}`.trim()
+
+            conn.sendMessage(m.chat, { image: { url: data }, caption: text, contextInfo: { mentionedJid: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), externalAdReply: { title: m.groupMetadata.subject, body: 'WhatsApp grupo', thumbnail: conn.profilePictureUrl(owner, 'image') || null, mediaType: 1 } } }, { quoted: m })
+        } break
 
         case 'grupo': {
             if (!m.isGroup) return m.sms('group')
@@ -559,11 +562,11 @@ export async function sendCase(conn, m, store) {
 
 Enviando archivo${readMore}`.trim();
                 await m.reply(caption);
-                await conn.sendMessage(m.chat, { document: { url: await conn.sendBuffer(link) }, mimetype: 'video/' + mime, fileName: name }, { quoted: m }); m.react(done)
+                await conn.sendMessage(m.chat, { document: { url: await conn.getFile(link).filename }, mimetype: 'video/' + mime, fileName: name }, { quoted: m }); m.react(done)
             } break
 
             case 'play': case 'yta': case 'playmp3': case 'audio': case 'ytv': case 'playmp4': case 'video': {
-                if (quesCoin()) return;
+                if (quesCoin()) return m.react('💲')
 
                 if (!m.text) return m.reply(`*Ingresa el título de una canción*`)
                 const vid = (await yts(m.text)).all[0]
@@ -580,7 +583,7 @@ Enviando archivo${readMore}`.trim();
                     try {
                         await sendMsge('Cargando audio'); m.react(rwait)
                         const mp3 = await dlmp3(_Url)
-                        conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${title}.mp3` }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { remCoin(true) }; fs.unlinkSync(mp3.path)
+                        conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${title}.mp3` }, { quoted: m }); m.react(done); remCoin(true); fs.unlinkSync(mp3.path)
                     } catch (e) { m.react(error); return }
                 }
 
@@ -589,14 +592,14 @@ Enviando archivo${readMore}`.trim();
                         await sendMsge('Cargando video'); m.react(rwait)
                         const { title, thumb, Date, duration, channel, quality, contentLength, description, videoUrl } = await ytdl.mp4(_Url)
                         let cap = `*『 DV-YouTube 』*\n\n▢ *Título:* ${title}\n▢ *Calidad:* ${quality}`.trim()
-                        await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { remCoin(true) }
+                        await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); remCoin(true)
                     } catch { m.react(error); return }
                 }
 
             } break
 
             case 'ytmp4': case 'ytmp3': {
-                if (quesCoin()) return;
+                if (quesCoin()) return m.react('💲')
                 if (!m.args[0]) return m.reply('*Ingrese el comando junto al link de YouTube*')
                 if (!ytIdRegex.test(m.args[0])) return m.reply(`Link incorrecto`)
                 if (m.command == 'ytmp3') {
@@ -604,7 +607,7 @@ Enviando archivo${readMore}`.trim();
                     for (let i = 0; i < urls.length; i++) {
                         try {
                             const mp3 = await dlmp3(urls[i])
-                            conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: mp3.info.title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${mp3.info.title}.mp3` }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { remCoin(true) }; fs.unlinkSync(mp3.path)
+                            conn.sendMessage(m.chat, { audio: fs.readFileSync(mp3.path), contextInfo: { externalAdReply: { title: mp3.info.title, body: mp3.info.author, previewType: "PHOTO", thumbnail: mp3.info.thumbnail } }, mimetype: "audio/mp4", fileName: `${mp3.info.title}.mp3` }, { quoted: m }); m.react(done); remCoin(true); fs.unlinkSync(mp3.path)
                         } catch { m.react(error) }
                     }
                 } else
@@ -614,7 +617,7 @@ Enviando archivo${readMore}`.trim();
                             try {
                                 const { title, thumb, Date, duration, channel, quality, contentLength, description, videoUrl } = await ytdl.mp4(urls[i])
                                 let cap = `*『 DV-YouTube 』*\n\n▢ *Título:* ${title}\n▢ *Calidad:* ${quality}`.trim()
-                                await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { remCoin(true) };
+                                await conn.sendMessage(m.chat, { document: { url: videoUrl }, caption: cap, mimetype: 'video/mp4', fileName: title + `.mp4` }, { quoted: m }); m.react(done); remCoin(true);
                             } catch { m.react(error) }
                         }
                     }
@@ -622,7 +625,7 @@ Enviando archivo${readMore}`.trim();
             } break
 
             case 'yts': case 'ytsearch': {
-                if (quesCoin()) return;
+                if (quesCoin()) return m.react('💲')
                 if (!m.text) return m.reply('Que quieres que busque en YouTube?')
                 m.react(rwait)
                 const vid = (await yts(m.text)).all[0]
@@ -635,7 +638,7 @@ Enviando archivo${readMore}`.trim();
                         case 'canal': return `▢ *${v.name}* (${v.url})\n▢ ${v.subCountLabel} (${v.subCount}) Suscribirse\n▢ ${v.videoCount} videos`.trim()
                     }
                 }).filter(v => v).join('\n\n________________________\n\n')
-                await conn.sendMessage(m.chat, { text: readMore + teks, contextInfo: { externalAdReply: { title: 'YouTube - Search', thumbnailUrl: thumbnail, mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { remCoin(true) }
+                await conn.sendMessage(m.chat, { text: readMore + teks, contextInfo: { externalAdReply: { title: 'YouTube - Search', thumbnailUrl: thumbnail, mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m }); m.react(done); remCoin(true)
             } break
 
             case 'tiktok': case 'tt': {
@@ -657,7 +660,7 @@ Enviando archivo${readMore}`.trim();
                         m.reply(cptn)
                         for (let o = 0; o < url.length; o++) { await conn.sendMessage(m.chat, { [(/mp4/.test(url[o])) ? "video" : "image"]: { url: url[o] } }, { quoted: m }) }
                         if (musicatiktok) conn.sendMessage(m.chat, { audio: { url: musicatiktok }, mimetype: 'audio/mpeg' }); m.react(done)
-                        if (database('chats', m.chat).commands.rpg) { remCoin(true) }
+                        remCoin(true)
                     } else {
                         var url = p.play
                         var cptn = `*Titulo:* ${p.title}\n`
@@ -668,14 +671,14 @@ Enviando archivo${readMore}`.trim();
                         cptn += `\nBy KenisawaDev`
                         await conn.sendMessage(m.chat, { video: { url: url }, caption: cptn }, { quoted: m })
                         if (musicatiktok) conn.sendMessage(m.chat, { audio: { url: musicatiktok }, mimetype: 'audio/mpeg' }); m.react(done)
-                        if (database('chats', m.chat).commands.rpg) { remCoin(true) }
+                        remCoin(true)
                     }
                 } catch (e) { console.log(e); m.react(error) }
             } break
 
             case 'gitclone': case 'git': case 'clone': {
                 const regex = /(?:https|git)(?::\/\/|@)github\.com[\/:]([^\/:]+)\/(.+)/i
-                if (quesCoin()) return;
+                if (quesCoin()) return m.react('💲')
 
                 if (!m.args[0]) m.reply('Y el link?')
                 if (!regex.test(m.args[0])) m.reply(`Link incorrecto`)
@@ -684,14 +687,14 @@ Enviando archivo${readMore}`.trim();
                 let url = `https://api.github.com/repos/${user}/${repo}/zipball`
                 let filename = (await fetch(url, { method: 'HEAD' })).headers.get('content-disposition').match(/attachment; filename=(.*)/)[1]
                 m.react(rwait)
-                try { conn.sendMessage(m.chat, { document: { url: url }, mimetype: 'document/zip', fileName: filename }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { remCoin(true) } } catch { m.react(error); return }
+                try { conn.sendMessage(m.chat, { document: { url: url }, mimetype: 'document/zip', fileName: filename }, { quoted: m }); m.react(done); remCoin(true) } catch { m.react(error); return }
             } break
 
             //https://drive.google.com/file/d/1dmHlx1WTbH5yZoNa_ln325q5dxLn1QHU/view*
             case 'gdrive': {
-                if (quesCoin()) return;
+                if (quesCoin()) return m.react('💲')
                 if (!m.args[0]) return m.reply(`Y el link?`)
-                try { m.react(rwait); await GDriveDl(args[0]).then(async (res) => { if (!res) return m.reply(res); conn.sendMessage(m.chat, { document: { url: res.downloadUrl }, mimetype: res.mimetype, fileName: `${res}` }, { quoted: m }); if (database('chats', m.chat).commands.rpg) { remCoin(true) } }) } catch (e) { m.react(error) }
+                try { m.react(rwait); await GDriveDl(args[0]).then(async (res) => { if (!res) return m.reply(res); conn.sendMessage(m.chat, { document: { url: res.downloadUrl }, mimetype: res.mimetype, fileName: `${res}` }, { quoted: m }); remCoin(true) }) } catch (e) { m.react(error) }
             } break
 
             case 'pinterest': case 'pin': {
@@ -705,7 +708,7 @@ Enviando archivo${readMore}`.trim();
             } break
 
             case 'gimage': case 'image': case 'imagen': {
-                if (quesCoin()) return;
+                if (quesCoin()) return m.react('💲')
 
                 if (!m.text) return m.reply("¡Ingrese un término de búsqueda para obtener una imagen de Google!");
                 m.react(rwait)
@@ -715,21 +718,21 @@ Enviando archivo${readMore}`.trim();
                         if (error) { return m.reply("Se ha producido un error al buscar imágenes.") }
                         if (!result || result.length === 0) { return m.reply("No se han encontrado imágenes para el término de búsqueda dado.") }
                         const images = result[Math.floor(Math.random() * result.length)].url
-                        try { conn.sendMessage(m.chat, { image: { url: images }, caption: `▢ *Resultado de:* ${m.text}\n▢  *Buscador: 『 Google 』*`, }, { quoted: m }); m.react(done); if (database('chats', m.chat).commands.rpg) { remCoin(true) } } catch { m.react('❌') }
+                        try { conn.sendMessage(m.chat, { image: { url: images }, caption: `▢ *Resultado de:* ${m.text}\n▢  *Buscador: 『 Google 』*`, }, { quoted: m }); m.react(done); remCoin(true) } catch { m.react('❌') }
 
                     });
                 } catch { m.react(error) }
             } break
 
             case 'chatgpt': case 'gpt': case 'ia': case 'IA': {
-                if (quesCoin()) return;
+                if (quesCoin()) return m.react('💲')
                 if (!m.text) return m.reply('Y el texto?')
                 m.react('\uD83D\uDCAC')
                 try {
                     await conn.sendPresenceUpdate('composing', m.chat)
                     const OpenAI = await fetchJson(`https://aemt.me/openai?text=${m.text}`)
                     var Texto = OpenAI.result
-                    await m.reply(Texto); if (database('chats', m.chat).commands.rpg) { remCoin(true) }
+                    await m.reply(Texto); remCoin(true)
                 } catch { m.react(error) }
             } break
 
@@ -753,7 +756,7 @@ Enviando archivo${readMore}`.trim();
                     mtype.forEach(elemento => {
                         const filesave = { fileName: m.text ? m.text : m.type(sms.message) == 'documentMessage' ? sms.message.documentMessage.fileName : 'My Archive', fecha: moment().tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format('DD/MM/YY HH:mm:ss'), fileMessage: sms }
                         if (m.type(sms.message) == elemento) istrue = false
-                        if (istrue) { saveFiles.push(filesave); m.react(done); if (database('chats', m.chat).commands.rpg) { remCoin(true) } } else { m.reply('El archivo no coincide con los formatos admitidos.'); m.react(error) }
+                        if (istrue) { saveFiles.push(filesave); m.react(done); remCoin(true) } else { m.reply('El archivo no coincide con los formatos admitidos.'); m.react(error) }
                     })
                 }
 
@@ -811,15 +814,15 @@ Enviando archivo${readMore}`.trim();
 
             case 'sticker': case 's': {
                 const smsg = m.type(m.SMS().message)
-                if (quesCoin()) return;
+                if (quesCoin()) return m.react('💲')
 
                 if (smsg == 'imageMessage') {
                     let media = await conn.download()
-                    await conn.sendImageAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); if (database('chats', m.chat).commands.rpg) { remCoin(true) }
+                    await conn.sendImageAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); remCoin(true)
                 } else if (smsg == 'videoMessage') {
                     if (m.SMS().message.seconds > 12) return m.reply('Máximo 10 segundos!')
                     let media = await conn.download()
-                    conn.sendVideoAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); if (database('chats', m.chat).commands.rpg) { remCoin(true) }
+                    conn.sendVideoAsSticker(m.chat, media, m, { packname: m.args[0] || m.name || 'null', author: 'ZN' }); remCoin(true)
                 } else {
                     m.reply(`Responde o envía un video/imagen utilizando lo siguiente comando: ${global.prefix + m.command}\nDuración del video: 1-9 segundos`)
                 }
@@ -1144,7 +1147,7 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
         case 'menu': case 'help': case 'comandos': {
             const comandos = database('chats', m.chat).commands
             const defaultMenu = () => {
-                let menu = `${Menu}\n*Comandos RPG :* ${comandos.rpg ? 'encendido' : 'apagado'}\n*Comandos Servicio :* ${comandos.servicio ? 'encendido' : 'apagado'}\n\n${MenuRandom}\n\n${MenuGrupos}${comandos.rpg ? '\n\n' + MenuRpg : ''}${comandos.servicio ? '\n\n' + MenuServicio : ''}\n\n${MenuPropietario}`
+                let menu = `${Menu}\n\n*● Comandos RPG :* ${comandos.rpg ? 'encendido' : 'apagado'}\n*● Comandos Servicio :* ${comandos.servicio ? 'encendido' : 'apagado'}\n\n${MenuRandom}\n\n${MenuGrupos}${comandos.rpg ? '\n\n' + MenuRpg : ''}${comandos.servicio ? '\n\n' + MenuServicio : ''}\n\n${MenuPropietario}`
 
                 let text = menu.split('%prefix ').join(global.prefix)
                 text = text.replace('%name', `@${m.sender.split`@`[0]}`).replace('%prem', m.isPrems ? 'Si' : 'No').replace('%coin', m.isPrems ? '∞' : database('users', m.sender).coin).replace('%rol', database('users', m.sender).role)
@@ -1417,6 +1420,19 @@ async function fetchJson(url, options) {
         const res = await axios({ method: 'GET', url: url, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36' }, ...options })
         return res.data
     } catch (err) { return err }
+}
+
+function formatDate(n, locale = 'es') {
+    let d = new Date(n)
+    return d.toLocaleDateString(locale, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric'
+    })
 }
 
 function timeString(seconds) {
