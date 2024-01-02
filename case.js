@@ -236,7 +236,7 @@ export async function sendCase(conn, m, store) {
         return usuario.coin = premium(m.sender) ? usuario.coin - 0 : usuario.coin - (coin == true ? 1 : coin)
     }
 
-    if (!database('users', m.sender).name === m.name) { if (!database('users', m.sender).registered) database('users', m.sender).name = m.name }
+    if (!(database('users', m.sender).name == m.name)) { if (!database('users', m.sender).registered) { database('users', m.sender).name = m.name }}
 
     if (!conn.question) { conn.question = {} }
     if (!conn.transferencia) { conn.transferencia = {} }
