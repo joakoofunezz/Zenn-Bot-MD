@@ -236,7 +236,7 @@ export async function sendCase(conn, m, store) {
         return usuario.coin = premium(m.sender) ? usuario.coin - 0 : usuario.coin - (coin == true ? 1 : coin)
     }
 
-    if (!(database('users', m.sender).name == m.name)) { if (!database('users', m.sender).registered) { database('users', m.sender).name = m.name }}
+    if (!(database('users', m.sender).name == m.name)) { if (!database('users', m.sender).registered) { database('users', m.sender).name = m.name } }
 
     if (!conn.question) { conn.question = {} }
     if (!conn.transferencia) { conn.transferencia = {} }
@@ -431,7 +431,7 @@ ${listAdmin}
 ▢ *ID del grupo* : ${m.groupMetadata.id}
 ▢ *Descripción* : \n${readMore}\n${m.groupMetadata.desc?.toString()}`.trim()
 
-            conn.sendMessage(m.chat, { image: { url: data }, caption: text, contextInfo: { mentionedJid: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), externalAdReply: { title: m.groupMetadata.subject, body: 'WhatsApp grupo', thumbnail: conn.profilePictureUrl(owner, 'image') || null, mediaType: 1 } } }, { quoted: m })
+            conn.sendMessage(m.chat, { image: { url: data }, caption: text, contextInfo: { mentionedJid: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), externalAdReply: { title: `${m.groupMetadata.subject}`, body: 'WhatsApp grupo', thumbnail: fs.readFileSync('./multimedia/imagenes/thumbnail.jpg'), mediaType: 1 } } }, { quoted: m })
         } break
 
         case 'grupo': {
@@ -477,24 +477,25 @@ ${listAdmin}
             if (!(m.mentionedJid[0] || m.quoted || m.text)) return m.reply(`A quien quiere eliminar?`);
             //if (!m.text) return m.reply('Este comando tiene la capacidad de eliminar a varios usuarios simultáneamente. Por favor, proporciona una lista de los usuarios que deseas eliminar, asegurándote de etiquetar a cada uno de ellos')
 
-            if (m.args[0] && m.args[1]) {
-                const numerosEncontrados = m.text.match(/\d+/g)
-                let numeros = numerosEncontrados.map(numeros => numeros.join('') + '@s.whatsapp.net')
-                if (numeros.map(Bot => Bot).includes(conn.user.jid)) return m.reply('El número asociado al bot no debe incluirse en la lista de usuarios a eliminar.')
-
-                conn.question[m.sender] = {
-                    User: m.sender,
-                    chat: m.chat,
-                    Numeros: numeros,
-                    setTimeout: setTimeout(() => (m.reply('Se acabó el tiempo, esta acción fue cancelada'), delete conn.question[m.sender]), 60 * 1000)
-                }
-
-                m.reply(`¿Confirma que desea eliminar a ${numeros.length} usuarios?\n\nDispone de *60* segundos para tomar una decisión. Si está de acuerdo con esta acción, responda con un ‘sí’. En caso contrario, puede cancelar esta acción respondiendo con un ‘no’.`.trim())
-            } else {
+            if (m.quoted || m.mentionedJid[0] && !m.args[1]) {
                 const user = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted.sender
                 if (user.includes(m.Bot) && !m.isOwner) return m.reply('No puedes eliminar al Bot con este comando')
                 await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
+                return m.react(done)
             }
+
+            const numerosEncontrados = m.text.match(/\d+/g)
+            let numeros = numerosEncontrados.map(numero => numero + '@s.whatsapp.net')
+            if (numeros.map(Bot => Bot).includes(conn.user.jid)) return m.reply('El número asociado al bot no debe incluirse en la lista de usuarios a eliminar.')
+
+            conn.question[m.sender] = {
+                User: m.sender,
+                chat: m.chat,
+                Numeros: numeros,
+                setTimeout: setTimeout(() => (m.reply('Se acabó el tiempo, esta acción fue cancelada'), delete conn.question[m.sender]), 60 * 1000)
+            }
+
+            m.reply(`¿Confirma que desea eliminar a ${numeros.length} usuarios?\n\nDispone de *60* segundos para tomar una decisión. Si está de acuerdo con esta acción, responda con un ‘sí’. En caso contrario, puede cancelar esta acción respondiendo con un ‘no’.`.trim())
         } break
 
         /*case 'ban': case 'kick': {
@@ -835,7 +836,7 @@ Enviando archivo${readMore}`.trim();
         switch (m.command) {
             case 'level': case 'nivel': case 'subirnivel': case 'lvl': case 'levelup': {
                 if (!(m.sender in global.db.data.users)) return m.reply(`No estas en mi base de datos`)
-                const User = global.db.data.users[m.sender]
+                const User = database('users', m.sender)
                 let nivel = User.nivel
                 let Exp = User.exp
                 const NivelXp = (level) => { return level * global.rpg.precios.nivel }
@@ -1160,8 +1161,17 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
         } break
 
         case 'creador': case 'owner': {
-            let vcard = `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:Zeppt\nitem.ORG: Creador del Bot\nitem1.TEL;waid=5216673877887:+52 667 387 7887\nEND:VCARD`
-            let a = await conn.sendMessage(m.chat, { contacts: { displayName: 'ZennBot MD', contacts: [{ vcard }] } }, { quoted: m })
+            await sendContactArray(conn, m.chat, [[`5216673877887`, `${database('users', '573245088667@s.whatsapp.net').name || null}`, `⚡ Creador principal`, null]], { key: { fromMe: false, participant: "0@s.whatsapp.net", ...(m.chat ? { remoteJid: "status@broadcast" } : {}) }, message: { contactMessage: { displayName: 'Zenn-Bot 24/7', vcard: `BEGIN:VCARD\nVERSION:3.0\nN:XL;0,;;;\nFN:0,\nitem1.TEL;waid=${m.sender.split("@")[0]}:${m.sender.split("@")[0]}\nitem1.X-ABLabell:Ponsel\nEND:VCARD` } } })
+
+            async function sendContactArray(conn, jid, data, quoted, options) {
+                if (!Array.isArray(data[0]) && typeof data[0] === 'string') data = [data]; let contacts = []; for (let [number, name, isi, isi1] of data) {
+                    number = number.replace(/[^0-9]/g, ''); let njid = number + '@s.whatsapp.net'; let biz = await conn.getBusinessProfile(njid).catch(_ => null) || {}
+                    let vcard = `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${name.replace(/\n/g, '\\n')}\nitem.ORG:${isi}\nitem1.TEL;waid=${number}:${PhoneNumber('+' + number).getNumber('international')}\nitem1.X-ABLabel:${isi1}\nEND:VCARD`.trim(); contacts.push({ vcard, displayName: name })
+                }; return await conn.sendMessage(jid, { contacts: { displayName: (contacts.length > 1 ? `2013 kontak` : contacts[0].displayName) || null, contacts } }, { quoted, ...options })
+            }
+
+            /*let vcard = `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:Zeppt\nitem.ORG: Creador del Bot\nitem1.TEL;waid=5216673877887:+52 667 387 7887\nEND:VCARD`
+            let a = await conn.sendMessage(m.chat, { contacts: { displayName: 'ZennBot MD', contacts: [{ vcard }] } }, { quoted: m })*/
         } break
     }
 

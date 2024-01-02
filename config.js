@@ -31,6 +31,7 @@ global.rpg = {
     },
     precios: {
         coin: 100,
+        nivel: 500
     },
     role: [
         { name: 'Novato', nivel: 1 },

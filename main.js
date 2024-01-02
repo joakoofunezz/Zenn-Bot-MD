@@ -257,8 +257,7 @@ async function StartBot() {
         setTimeout(() => { conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove') }, 1000)
       }
     }
-
-    await sendCase(conn, m, store)//.catch(e => { m.reply(e); console.log('Error: ' + e) })
+    if (m.isCmd) await sendCase(conn, m, store)//.catch(e => { m.reply(e); console.log('Error: ' + e) })
   })
 
   conn.ev.on("groups.update", async (json) => {
