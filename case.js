@@ -47,7 +47,7 @@ let Menu = `
 ┃ *coins :* %coin
 ┃ *Rol : %rol*
 ┠─────────────
-┃ *Tiempo activo :* [ ${timeString(process.uptime()) || ''} ]
+┃ *Tiempo activo :* [ ${global.uptime || ''} ]
 ┃ *Version del bot :* 1.0.5
 ┃ *Creador :* Zeppt
 ┃ *wa.me/526673877887*
@@ -217,6 +217,8 @@ export async function sendCase(conn, m, store) {
 
     if (!m.isOwner && data.chats[m.chat].isBanned) return;
     if (!m.isROwner && data.users[m.sender].banned) return;
+    if (!(m.isROwner ?? m.isOwner ?? m.isModr ?? m.isAdmin) && data.chats[m.chat].commands.adminUse) return;
+    if (!(m.isROwner ?? m.isOwner ?? m.isModr) && data.settings[m.Bot].OwnerUse) return;
 
     const database = (object, m) => global.db.data[object][m]
     const items = (UserXp, xpNecesario) => { let _false = false; if (UserXp < xpNecesario) _false = false; else _false = true; return _false }
@@ -243,9 +245,9 @@ export async function sendCase(conn, m, store) {
 
     if (conn.question[m.sender]) {
         const object = conn.question
-        const { User, chat, Numeros, setTimeout } = object[m.sender]
+        const { user, chat, Numeros, setTimeout } = object[m.sender]
         if (!(chat === m.chat)) return;
-        if (!(User === m.sender)) return;
+        if (!(user === m.sender)) return;
 
         if (m.body.toLowerCase().includes('no')) {
             clearTimeout(setTimeout)
@@ -254,7 +256,6 @@ export async function sendCase(conn, m, store) {
         }
 
         if (m.body.toLowerCase().includes('si')) {
-            console.log(JSON.stringify(Numeros, undefined, 2))
             for (let i = 0; i < Numeros.length; i++) { await conn.groupParticipantsUpdate(chat, [Numeros[i]], 'remove') }
             await conn.sendMessage(m.chat, { text: `Se eliminaron *${Numeros.length}* participantes ✓`, mentions: [m.sender] }, { ephemeralExpiration: 24 * 3600, quoted: { key: { participant: '0@s.whatsapp.net' }, message: { documentMessage: { title: `Acción ejecutada por\nUser : ${m.name}`, jpegThumbnail: null } } } })
             clearTimeout(setTimeout)
@@ -288,7 +289,10 @@ export async function sendCase(conn, m, store) {
 
     ////////////////////////GRUPOS
     switch (m.command) {
-        case 'chat': { m.reply('ID: ' + m.chat) } break
+        case 'chat': {
+            if (!m.text) return
+            await conn.relayMessage(m.chat, { requestPaymentMessage: { currencyCodeIso4217: 'INR', amount1000: '1000000000000', requestFrom: '0@s.whatsapp.net', noteMessage: { extendedTextMessage: { text: m.text, contextInfo: { mentionedJid: [m.sender], externalAdReply: { showAdAttribution: true } } } } } }, {})
+        } break
 
         case 'encender': case 'true': case 'apagar': case 'false': {
             if (!m.args[0]) return m.reply(settings.split('%prefix ').join(global.prefix))
@@ -479,6 +483,7 @@ ${listAdmin}
 
             if (m.quoted || m.mentionedJid[0] && !m.args[1]) {
                 const user = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted.sender
+                if ((global.owner.find(o => o[2])?.[0] + '@s.whatsapp.net').includes(user)) return m.reply('No puedes eliminar al creador del Bot con este comando')
                 if (user.includes(m.Bot) && !m.isOwner) return m.reply('No puedes eliminar al Bot con este comando')
                 await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
                 return m.react(done)
@@ -489,7 +494,7 @@ ${listAdmin}
             if (numeros.map(Bot => Bot).includes(conn.user.jid)) return m.reply('El número asociado al bot no debe incluirse en la lista de usuarios a eliminar.')
 
             conn.question[m.sender] = {
-                User: m.sender,
+                user: m.sender,
                 chat: m.chat,
                 Numeros: numeros,
                 setTimeout: setTimeout(() => (m.reply('Se acabó el tiempo, esta acción fue cancelada'), delete conn.question[m.sender]), 60 * 1000)
@@ -563,7 +568,7 @@ ${listAdmin}
 
 Enviando archivo${readMore}`.trim();
                 await m.reply(caption);
-                await conn.sendMessage(m.chat, { document: { url: await conn.getFile(link).filename }, mimetype: 'video/' + mime, fileName: name }, { quoted: m }); m.react(done)
+                await conn.sendMessage(m.chat, { document: { url: (await conn.getFile(link).data).catch(e => conn.getFile(link).data) }, mimetype: 'video/' + mime, fileName: name }, { quoted: m }); m.react(done)
             } break
 
             case 'play': case 'yta': case 'playmp3': case 'audio': case 'ytv': case 'playmp4': case 'video': {
@@ -907,24 +912,24 @@ Enviando archivo${readMore}`.trim();
             case 'perfil': case 'profile': {
                 const sender = m.quoted ? m.quoted.sender : m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender
                 if (!(sender in global.db.data.users)) return m.reply(`El usuario no se encuentra en mi base de datos`)
-                let pp = await conn.profilePictureUrl(sender, 'image')
+                let pp = await conn.profilePictureUrl(sender, 'image').catch(_ => './multimedia/imagenes/avatar.jpg')
                 let { coin, exp, nivel, role, registered, name } = database('users', m.sender)
                 let Text = `
-    ┌───「 *PERFIL* 」
-    ▢ *Nombres:* 
-    • ${registered ? name : m.name}
-    • @${sender.replace(/@.+/, '')}
-    ▢ *Numero:* ${PhoneNumber('+' + sender.replace('@s.whatsapp.net', '')).getNumber('international')}
-    ▢ *Link:* wa.me/${sender.split`@`[0]}
-    ▢ *Premium* : ${m.isPrems ? 'Si' : 'No'}
-    ▢ *coins :* ${coin}
-    ▢ *XP :* ${exp}
-    ▢ *Nivel :* ${nivel}
-    ▢ *Rol :* ${role}
-    ▢ *Registrado :* ${registered ? 'Si' : 'No'}
-    └──────────────`.trim()
+┌───「 *PERFIL* 」
+▢ *Nombres:* 
+• ${registered ? name : m.name}
+• @${sender.replace(/@.+/, '')}
+▢ *Numero:* ${PhoneNumber('+' + sender.replace('@s.whatsapp.net', '')).getNumber('international')}
+▢ *Link:* wa.me/${sender.split`@`[0]}
+▢ *Premium* : ${m.isPrems ? 'Si' : 'No'}
+▢ *coins :* ${coin}
+▢ *XP :* ${exp}
+▢ *Nivel :* ${nivel}
+▢ *Rol :* ${role}
+▢ *Registrado :* ${registered ? 'Si' : 'No'}
+└──────────────`.trim()
 
-                const { path } = await overlayImages([pp, registered ? './multimedia/iconos/usuario verificado.png' : './multimedia/iconos/usuario.png'], { tamano: [100, 100], localizacion: ['abajoIzquierda', 50] })
+                const { path } = await overlayImages([pp, registered ? m.isPrems ? './multimedia/iconos/premium.png' : './multimedia/iconos/registrado.png' : './multimedia/iconos/usuario.png'], { tamano: [100, 100], localizacion: ['abajoIzquierda'] })
 
                 conn.sendMessage(m.chat, { image: fs.readFileSync(path), caption: Text, contextInfo: { mentionedJid: [...Text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), externalAdReply: { title: registered ? name : m.name, body: 'Usuario de Zenn Bot MD', thumbnail: fs.readFileSync('./multimedia/imagenes/thumbnail.jpg') } } }, { quoted: m }); m.react(done)
             } break
@@ -1115,12 +1120,11 @@ Enviando archivo${readMore}`.trim();
             let old = performance.now(); await message
             let neww = performance.now()
             let speed = neww - old
-            let uptime = timeString(process.uptime())
             var timestamp = now()
             let texto = (`*INFORMACIÓN DEL BOT*
 ${readMore}
 ▢ *Bot : (activo)*
-▢ *Tiempo de ejecucion :* [ ${uptime} ]
+▢ *Tiempo de ejecucion :* [ ${global.uptime} ]
 ▢ *Apodo en Whatsapp :*
 ● ${conn.user.name}
 ▢ *Creador :* Zeppt 
@@ -1142,7 +1146,7 @@ ${cpus[0].model.trim()} (${cpu.speed} MHZ)\n${Object.keys(cpu.times).map(type =>
 *CPU Core(s) Usado (${cpus.length} Core CPU)*
 ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Object.keys(cpu.times).map(type => `- *${(type + '*').padEnd(6)}: ${(100 * cpu.times[type] / cpu.total).toFixed(2)}%`).join('\n')}`).join('\n\n')}` : ''}`)
 
-            await conn.sendMessage(m.chat, { text: texto, contextInfo: { externalAdReply: { title: 'Zenn Bot MD (en proceso)', body: `Activo: ${uptime} / procesamiento : ${speed} milisegundos`, thumbnail: fs.readFileSync('./multimedia/imagenes/thumbnail.jpg'), mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m })
+            await conn.sendMessage(m.chat, { text: texto, contextInfo: { externalAdReply: { title: 'Zenn Bot MD (en proceso)', body: `Activo: ${global.uptime} / procesamiento : ${speed} milisegundos`, thumbnail: fs.readFileSync('./multimedia/imagenes/thumbnail.jpg'), mediaType: 1, renderLargerThumbnail: true } } }, { quoted: m })
         } break
 
         case 'menu': case 'help': case 'comandos': {
@@ -1164,10 +1168,15 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
             await sendContactArray(conn, m.chat, [[`5216673877887`, `${database('users', '573245088667@s.whatsapp.net').name || null}`, `⚡ Creador principal`, null]], { key: { fromMe: false, participant: "0@s.whatsapp.net", ...(m.chat ? { remoteJid: "status@broadcast" } : {}) }, message: { contactMessage: { displayName: 'Zenn-Bot 24/7', vcard: `BEGIN:VCARD\nVERSION:3.0\nN:XL;0,;;;\nFN:0,\nitem1.TEL;waid=${m.sender.split("@")[0]}:${m.sender.split("@")[0]}\nitem1.X-ABLabell:Ponsel\nEND:VCARD` } } })
 
             async function sendContactArray(conn, jid, data, quoted, options) {
-                if (!Array.isArray(data[0]) && typeof data[0] === 'string') data = [data]; let contacts = []; for (let [number, name, isi, isi1] of data) {
-                    number = number.replace(/[^0-9]/g, ''); let njid = number + '@s.whatsapp.net'; let biz = await conn.getBusinessProfile(njid).catch(_ => null) || {}
-                    let vcard = `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${name.replace(/\n/g, '\\n')}\nitem.ORG:${isi}\nitem1.TEL;waid=${number}:${PhoneNumber('+' + number).getNumber('international')}\nitem1.X-ABLabel:${isi1}\nEND:VCARD`.trim(); contacts.push({ vcard, displayName: name })
-                }; return await conn.sendMessage(jid, { contacts: { displayName: (contacts.length > 1 ? `2013 kontak` : contacts[0].displayName) || null, contacts } }, { quoted, ...options })
+                if (!Array.isArray(data[0]) && typeof data[0] === 'string') data = [data]
+                let contacts = []
+                for (let [number, name, isi, isi1] of data) {
+                    number = number.replace(/[^0-9]/g, '');
+                    let vcard = `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:${name.replace(/\n/g, '\\n')}\nitem.ORG:${isi}\nitem1.TEL;waid=${number}:${PhoneNumber('+' + number).getNumber('international')}\nitem1.X-ABLabel:${isi1}\nEND:VCARD`.trim()
+                    contacts.push({ vcard, displayName: name })
+                }
+
+                return await conn.sendMessage(jid, { contacts: { displayName: (contacts.length > 1 ? `2013 kontak` : contacts[0].displayName) || null, contacts } }, { quoted, ...options })
             }
 
             /*let vcard = `BEGIN:VCARD\nVERSION:3.0\nN:Sy;Bot;;;\nFN:Zeppt\nitem.ORG: Creador del Bot\nitem1.TEL;waid=5216673877887:+52 667 387 7887\nEND:VCARD`
@@ -1365,9 +1374,9 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
                 try {
                     let evaled = await eval(m.budy.slice(2))
                     if (typeof evaled !== 'string') evaled = util.inspect(evaled)
-                    await m.reply(evaled)
+                    if (evaled == 'undefined') { } else await m.reply(evaled)
                 } catch (err) {
-                    await m.reply(String(err))
+                    if (err == 'undefined') { } else await m.reply(String(err))
                 }
             }
             if (m.budy.startsWith('$')) {
@@ -1443,19 +1452,6 @@ function formatDate(n, locale = 'es') {
         minute: 'numeric',
         second: 'numeric'
     })
-}
-
-function timeString(seconds) {
-    seconds = Number(seconds);
-    var d = Math.floor(seconds / (3600 * 24));
-    var h = Math.floor(seconds % (3600 * 24) / 3600);
-    var m = Math.floor(seconds % 3600 / 60);
-    var s = Math.floor(seconds % 60);
-    var dDisplay = d > 0 ? d + (d == 1 ? ":" : ":") : "";
-    var hDisplay = h > 0 ? h + (h == 1 ? ":" : ":") : "";
-    var mDisplay = m > 0 ? m + (m == 1 ? ":" : ":") : "";
-    var sDisplay = s > 0 ? s + (s == 1 ? "" : "") : "";
-    return dDisplay + hDisplay + mDisplay + sDisplay;
 }
 
 function msToTime(duration) {
