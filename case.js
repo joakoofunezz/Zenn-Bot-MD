@@ -929,7 +929,7 @@ Enviando archivo${readMore}`.trim();
 ▢ *Registrado :* ${registered ? 'Si' : 'No'}
 └──────────────`.trim()
 
-                const { path } = await overlayImages([pp, registered ? m.isPrems ? './multimedia/iconos/premium.png' : './multimedia/iconos/registrado.png' : './multimedia/iconos/usuario.png'], { tamano: [100, 100], localizacion: ['abajoIzquierda'] })
+                const { path } = await overlayImages([pp, registered ? m.isPrems ? './multimedia/iconos/premium.png' : './multimedia/iconos/registrado.png' : './multimedia/iconos/usuario.png'], { tamano: [100, 100], localizacion: ['abajoIzquierda', 1] })
 
                 conn.sendMessage(m.chat, { image: fs.readFileSync(path), caption: Text, contextInfo: { mentionedJid: [...Text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), externalAdReply: { title: registered ? name : m.name, body: 'Usuario de Zenn Bot MD', thumbnail: fs.readFileSync('./multimedia/imagenes/thumbnail.jpg') } } }, { quoted: m }); m.react(done)
             } break
