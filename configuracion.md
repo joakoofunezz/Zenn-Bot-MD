@@ -1,12 +1,12 @@
 ## Configuración del archivo `config.js`
 
-1. **Número del propietario**
+1. **5493584832032**
 
    Reemplaza el número existente por el número que deseas que sea el propietario del bot. Asegúrate de incluir también tu nombre. Aquí tienes un ejemplo de cómo hacerlo:
 
-   ```js
+   ```
    global.owner = [
-    ['Tu número', 'Tu nombre', true]
+    ['5493584832032', 'Joaquin', true]
    ]
    ```
 
@@ -60,7 +60,7 @@
    global.rpg = {
     data: {
         exp: 0,
-        coin: 10,
+        coin: 1000,
         nivel: 0,
         role: 'Novato'
     }
