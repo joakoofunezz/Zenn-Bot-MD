@@ -946,11 +946,9 @@ Enviando archivo${readMore}`.trim();
 
             case 'slot': {
                 const { exp, nivel } = database('users', m.sender)
-
-                if (coin().coin[0]) return m.reply(coin().coin[1])
+                if (quesCoin()) return m.react('💲')
                 if (exp < 300) return m.reply('Es necesario tener un mínimo de *300 XP* para poder usar este comando.')
                 if (nivel == 4 || nivel < 5) return m.reply('Para utilizar este comando, es necesario que te encuentres en el nivel 5 o en uno más avanzado.')
-                if (coin().igual[0]) m.reply(coin().igual[1])
 
                 const frutas = ['🍎', '🍊', '🍇', '🍓', '🍒', '🍍', '🥝', '🍌']
 
