@@ -56,7 +56,7 @@ async function StartBot() {
     while (!connect.opcion) {
       const m = await question(chalk.white('┠') + chalk.red('┅') + chalk.white('> '))
       const comando = m.trim().split(/ +/).shift().toLowerCase()
-      switch (comando) { case '1': { connect.opcion = '1' } break; case '2': { connect.opcion = '2' } break; default: { console.log(`${chalk.white('╰') + chalk.red('┅') + chalk.white('[ ') + chalk.greenBright('Por favor, introduce solo el número 1 o 2.') + chalk.white(' ]')}\n`) + console.log(chalk.greenBright(menu)) } }
+      switch (comando) { case '1 ': case '.1': case ' 1': case '1': { connect.opcion = '1' } break; case '2 ': case '.2': case ' 2': case '2': { connect.opcion = '2' } break; default: { console.log(`${chalk.white('╰') + chalk.red('┅') + chalk.white('[ ') + chalk.greenBright('Por favor, introduce solo el número 1 o 2.') + chalk.white(' ]')}\n`) + console.log(chalk.greenBright(menu)) } }
     }
   }
 
