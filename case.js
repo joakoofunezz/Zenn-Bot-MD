@@ -1012,7 +1012,7 @@ Enviando archivo${readMore}`.trim();
                         User.exp = premium(m.sender) ? User.exp - 0 : items(User.exp, perder) ? User.exp - perder : 0
                         m.reply(`▢ *Perdiste*\n\n‣ Tú : ${m.text}\n‣ Bot : ${randItem}\n\nPuntos *-${perder} XP*`)
                     }
-                } else { m.reply(reseqv) }
+                } else { m.reply(`Seleccione piedra/papel/tijera\n\nEjemplo : *${global.prefix + m.command}* papel`) }
             } break
 
             case 'transferir': {
